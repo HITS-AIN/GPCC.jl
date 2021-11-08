@@ -8,6 +8,8 @@ module GPCC
 
     using MLBase, StatsFuns
 
+    using ApproximateVI
+
 
     include("delayedCovariance.jl")
 
@@ -17,7 +19,8 @@ module GPCC
 
     include("util.jl")
 
+    include("gpccvi.jl")
 
-    export gpcc, simulatedata
+    export gpcc, simulatedata, gpccvi
 
 end
