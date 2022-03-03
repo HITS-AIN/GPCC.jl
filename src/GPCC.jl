@@ -4,7 +4,7 @@ module GPCC
 
     using Optim, Distributions, LinearAlgebra, MiscUtil
 
-    using Printf
+    using Printf, MiscUtil
 
     using MLBase, StatsFuns
 
@@ -13,14 +13,14 @@ module GPCC
 
     include("delayedCovariance.jl")
 
-    include("gpcc.jl")
+    include("gpccvi.jl")
 
-    include("Experiments/Synthetic/simulatedata.jl")
+    include("simulatedata.jl")
 
     include("util.jl")
 
-    include("gpccvi.jl")
+    include("gpcc2.jl")
 
-    export gpcc, simulatedata, gpccvi
+    export gpcc2vi, simulatedata, gpcc2
 
 end

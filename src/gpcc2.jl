@@ -1,4 +1,4 @@
-function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, numberofrestarts = 1, ρmin = 0.1)
+function gpcc2(tarray, yarray, stdarray; iterations = iterations, seed = 1, numberofrestarts = 1, ρmin = 0.1)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -89,9 +89,8 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     negativeobjective(x) = - objective(x)
 
-    safenegativeobj = safewrapper(negativeobjective)
+    safeobj = safewrapper(negativeobjective)
 
-    safeobj = safewrapper(objective)
 
     #---------------------------------------------------------------------
     # Call optimiser and initialise with random search
@@ -109,11 +108,11 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
                             invmakepositive.(sampledelays());
                             invmakepositive(sampleρ())] for i in 1:50]
 
-        bestindex = argmin(map(safenegativeobj, randomsolutions))
+        bestindex = argmin(map(safeobj, randomsolutions))
 
         opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-8)
 
-        optimize(safenegativeobj, randomsolutions[bestindex], NelderMead(), opt)
+        optimize(safeobj, randomsolutions[bestindex], NelderMead(), opt)
 
     end
 
@@ -123,9 +122,6 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     paramopt = result.minimizer
 
-    post, mll = VI(safeobj, paramopt, optimiser = Optim.LBFGS(), iterations = iterations, show_every=1, S=100)
-
-    return mll, post, unpack
 
     #---------------------------------------------------------------------
     # instantiate learned matrix and observed variance parameter
@@ -247,7 +243,7 @@ end
 function informuser(; seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
                     JITTER = JITTER, ρmin = ρmin, Σb = Σb)
 
-    colourprint(@sprintf("Running gpcc2vi with random seed %d\n", seed), foreground = :light_blue, bold = true)
+    colourprint(@sprintf("Running gpcc2 with random seed %d\n", seed), foreground = :light_blue, bold = true)
     @printf("\t iterations             = %d\n", iterations)
     @printf("\t numberofrestarts       = %d\n", numberofrestarts)
     @printf("\t JITTER                 = %e\n", JITTER)

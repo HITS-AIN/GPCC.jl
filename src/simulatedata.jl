@@ -8,9 +8,9 @@ function simulatedata(; seed = 1)
     # Define GP parameters
     #---------------------------------------------------------------------
 
-    delays = [0.0; 2.0]
+    delays = [0.0; 2.0; 6.0]
 
-    N = [75; 30]
+    N = [75; 30; 50]
 
     σ = Vector{Vector{Float64}}(undef, length(delays))
 
@@ -20,9 +20,9 @@ function simulatedata(; seed = 1)
 
     end
 
-    scale = [1;1.5]
+    scale = [1;1.5; 0.5]
 
-    shift = [5; 6.0]
+    shift = [5; 6.0; 9]
 
     ℓ² = 0.75
 
