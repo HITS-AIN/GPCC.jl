@@ -1,5 +1,5 @@
 #############################################################################
-function simulatedata(; seed = 1)
+function simulatedata(; σ = 0.1, seed = 1, N = [50; 40; 30], ρ = 1.75)
 #############################################################################
 
     rg = MersenneTwister(seed)
@@ -8,23 +8,11 @@ function simulatedata(; seed = 1)
     # Define GP parameters
     #---------------------------------------------------------------------
 
-    delays = [0.0; 2.0; 6.0]
+    @show delays = [0.0; 2.0; 6.0]
 
-    N = [10; 10; 10] * 4
+    @show scale  = [1; 2; 0.5]
 
-    σ = Vector{Vector{Float64}}(undef, length(delays))
-
-    for i in 1:length(delays)
-
-        σ[i] = ones(N[i]) * 0.5
-
-    end
-
-    @show scale = [1; 2; 0.5]
-
-    @show shift = [5; 6.0; 9]
-
-    @show ℓ² = 1.75
+    @show shift  = [5; 6.0; 9]
 
 
     #---------------------------------------------------------------------
@@ -50,7 +38,7 @@ function simulatedata(; seed = 1)
     # Define Gaussian process to draw noisy targets
     #---------------------------------------------------------------------
 
-    C = delayedCovariance(matern32, scale, delays, ℓ², t)
+    C = delayedCovariance(matern32, scale, delays, ρ, t)
 
     let
 
@@ -75,7 +63,7 @@ function simulatedata(; seed = 1)
 
     for i in 1:length(delays)
 
-        y[i] = Y[mark+1:mark+N[i]] * scale[i] .+ shift[i] .+ σ[i].*randn(rg, N[i])
+        y[i] = Y[mark+1:mark+N[i]] * scale[i] .+ shift[i] .+ σ*randn(rg, N[i])
 
         mark += N[i]
 
