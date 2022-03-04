@@ -1,4 +1,4 @@
-function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -99,18 +99,18 @@ function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = it
     # Call optimiser and initialise with random search
     #---------------------------------------------------------------------
 
-    sampleρ()       = rand(rg, Uniform(ρmin, ρmax))
+    initialρ() = rand(Uniform(ρmin+1e-3, ρmax-1e-3))
 
-    samplescales()  = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+    initialscales() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
 
     function getsolution()
 
-        randomsolutions = [[invmakepositive.(samplescales()); invtransformbetween(sampleρ(), ρmin, ρmax)] for i in 1:50]
+        randomsolutions = [[invmakepositive.(initialscales()); invtransformbetween(initialρ(), ρmin, ρmax)] for i in 1:initialrandom]
 
         bestindex = argmin(map(safeobj, randomsolutions))
 
-        opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-8)
+        opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-6)
 
         optimize(safenegativeobj, randomsolutions[bestindex], NelderMead(), opt)
 
