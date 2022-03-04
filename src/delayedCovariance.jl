@@ -2,7 +2,9 @@ function delayedCovariance(scale, delays, ℓ², x, y)
 
     @assert(all(scale .> 0))
 
-    @assert(ℓ² > 0)
+    if ℓ² <= 0
+        error(@sprintf("ℓ²=%.8f is <= 0", ℓ²))
+    end
 
     # number of bands
 
