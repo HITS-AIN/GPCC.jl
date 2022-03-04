@@ -4,8 +4,8 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
 
     # let user know what is run
     str = @sprintf("\nRunning CV with %d number of folds\n\n", numberoffolds)
-    print(Crayon(foreground = :cyan, bold = true), @sprintf("%s", str), Crayon(reset = true))
-
+    colourprint(str, foreground = :cyan, bold = true)
+    
 
 
     numberofbands = length(yarray)
