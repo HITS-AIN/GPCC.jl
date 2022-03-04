@@ -27,6 +27,7 @@ module GPCC
 
     include("getprobabilities.jl")
 
-    export gpcc2vi, simulatedata, gpcc2, gpccfixdelay, performcv, getprobabilities
+    export gpcc2vi, simulatedata, gpcc2, gpccfixdelay, performcv, getprobabilities,
+        delaygivenvirialmass, velocitygivenvirialmass
 
 end

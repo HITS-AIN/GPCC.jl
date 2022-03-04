@@ -1,4 +1,4 @@
-function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, numberofrestarts = 1, ρmin = 0.1)
+function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -11,9 +11,7 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
     # Set constants
     #---------------------------------------------------------------------
 
-    JITTER = 1e-8   # JITTER to avoid numerical instability
-
-    Tmax = maximum(reduce(vcat, tarray))
+    JITTER = 1e-8
 
     L = length(tarray)
 
@@ -24,7 +22,7 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     Narray = length.(tarray)
 
-    @assert(L == length(yarray) == length(tarray) == length(stdarray))
+    @assert(L == length(delays) == length(yarray) == length(tarray) == length(stdarray))
 
 
     #---------------------------------------------------------------------
@@ -58,24 +56,24 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
     function unpack(param)
     #---------------------------------------------------------------------
 
-        @assert(length(param) == 2L)
+        @assert(length(param) == L + 1)
 
-        local scale  = makepositive.(param[1+0L:1*L]) .+ 1e-3
+        local scale  = makepositive.(param[1+0L:1*L]) .+ 1e-4
 
-        local delays = [0.0; makepositive.(param[1+1L:2*L-1])]
+        local ρ      = transformbetween(param[L+1], ρmin, ρmax)
 
-        local ρ     = makepositive(param[2L]) + 1e-3
-
-        return scale, delays, ρ
+        return scale, ρ
 
     end
 
 
     #---------------------------------------------------------------------
-    function objective(param)
+    # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-        local scale, delays, ρ = unpack(param)
+    function objective(param)
+
+        local scale, ρ = unpack(param)
 
         local K = delayedCovariance(scale, delays, ρ, tarray)
 
@@ -87,29 +85,30 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     end
 
+
+    # Auxiliaries
+
     negativeobjective(x) = - objective(x)
 
     safenegativeobj = safewrapper(negativeobjective)
 
     safeobj = safewrapper(objective)
 
+
     #---------------------------------------------------------------------
     # Call optimiser and initialise with random search
     #---------------------------------------------------------------------
 
+    sampleρ()       = rand(rg, Uniform(ρmin, ρmax))
+
+    samplescales()  = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+
+
     function getsolution()
 
-        sampleρ()       = rand(rg, Uniform(ρmin, Tmax))
+        randomsolutions = [[invmakepositive.(samplescales()); invtransformbetween(sampleρ(), ρmin, ρmax)] for i in 1:50]
 
-        samplescales()  = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
-
-        sampledelays()  = cumsum(rand(rg, L-1) * Tmax)
-
-        randomsolutions = [[invmakepositive.(samplescales());
-                            invmakepositive.(sampledelays());
-                            invmakepositive(sampleρ())] for i in 1:50]
-
-        bestindex = argmin(map(safenegativeobj, randomsolutions))
+        bestindex = argmin(map(safeobj, randomsolutions))
 
         opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-8)
 
@@ -117,21 +116,20 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     end
 
+
     allresults = [getsolution() for _ in 1:numberofrestarts]
 
-    result = allresults[argmin([res.minimum for res in allresults])]
+    result     = allresults[argmin([res.minimum for res in allresults])]
 
-    paramopt = result.minimizer
+    paramopt   = result.minimizer
 
-    post, mll = VI(safeobj, paramopt, optimiser = Optim.LBFGS(), iterations = iterations, show_every=1, S=75)
 
-    return mll, post, unpack
 
     #---------------------------------------------------------------------
     # instantiate learned matrix and observed variance parameter
     #---------------------------------------------------------------------
 
-    @show scale, delays, ρ = unpack(paramopt)
+    @show scale, ρ = unpack(paramopt)
 
     K = delayedCovariance(scale, delays, ρ, tarray)
 
@@ -238,19 +236,4 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     result.minimum, predictTest
 
-end
-
-
-
-
-
-function informuser(; seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                    JITTER = JITTER, ρmin = ρmin, Σb = Σb)
-
-    colourprint(@sprintf("Running gpcc2vi with random seed %d\n", seed), foreground = :light_blue, bold = true)
-    @printf("\t iterations             = %d\n", iterations)
-    @printf("\t numberofrestarts       = %d\n", numberofrestarts)
-    @printf("\t JITTER                 = %e\n", JITTER)
-    @printf("\t ρmin                   = %f\n", ρmin)
-    @printf("\t Σb                     = "); map(x->@printf("%.3f ",x), diag(Σb)); @printf("\n")
 end

@@ -1,5 +1,3 @@
-#---------------------------------------------------
-
 function delaygivenvirialmass(; Mv = Mv, V = V)
 
     c = 2.99792458e10 # speed of light in cm s-1
