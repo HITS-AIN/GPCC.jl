@@ -29,13 +29,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
     # Auxiliary matrices
     #---------------------------------------------------------------------
 
-    Y = reduce(vcat, yarray)          # concatenated time series observations
+    Y = reduce(vcat, yarray)           # concatenated time series observations
 
     Sobs = Diagonal(reduce(vcat, stdarray).^2)
 
-    Q  = Qmatrix(Narray)              # matrix for replicating elements
+    Q  = Qmatrix(Narray)               # matrix for replicating elements
 
-    μb = map(mean, yarray)            # prior mean
+    μb = map(mean, yarray)             # prior mean
 
     Σb = 100 * diagm(map(var, yarray)) # inflated prior covariance
 
@@ -137,6 +137,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
 
     makematrixsymmetric!(KSobsB)
 
+    #---------------------------------------------------------------------
+    # posterior distribution for shifts b
+    #---------------------------------------------------------------------
+    Σpostb = (Σb\I + Q'*((Sobs + K)\Q)) \ I
+    @show size(Σpostb) size(Q) size(μb) size(Σb) size(Sobs+K)
+    @show size(Σb\μb)
+    μpostb = Σpostb * ((Q' / (Sobs + K))*Y + Σb\μb)
 
     #---------------------------------------------------------------------
     # Functions for predicting on test data
@@ -232,8 +239,11 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
     end
 
 
-    # return function value returned from optimisation and prediction function
+    # return:
+    # • function value returned from optimisation
+    # • prediction function
+    # • posterior of shift parameter
 
-    result.minimum, predictTest
+    result.minimum, predictTest, MvNormal(μpostb, makematrixsymmetric(Σpostb))
 
 end

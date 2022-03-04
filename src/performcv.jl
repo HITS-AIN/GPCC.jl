@@ -66,7 +66,7 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
 
 
         # Run deconvolution
-        _,predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; kernel = kernel, delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)
+        predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; kernel = kernel, delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)[2]
 
         # evaluate on held out test data
         fitness[foldindex] = predict(ttest, ytest, stest)
