@@ -9,6 +9,18 @@ function informuser(; seed = seed, iterations = iterations, numberofrestarts = n
     @printf("\t Σb                     = "); map(x->@printf("%.3f ",x), diag(Σb)); @printf("\n")
 end
 
+#---------------------------------------------------
+
+function OU(xᵢ,xⱼ ; ℓ²=1.0)
+
+    ℓ = sqrt(ℓ²)
+
+    r = norm(xᵢ - xⱼ)
+
+    exp(-r/ℓ)
+
+end
+
 
 #---------------------------------------------------
 
