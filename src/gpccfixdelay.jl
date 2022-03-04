@@ -140,10 +140,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
     #---------------------------------------------------------------------
     # posterior distribution for shifts b
     #---------------------------------------------------------------------
+
     Σpostb = (Σb\I + Q'*((Sobs + K)\Q)) \ I
-    @show size(Σpostb) size(Q) size(μb) size(Σb) size(Sobs+K)
-    @show size(Σb\μb)
+
     μpostb = Σpostb * ((Q' / (Sobs + K))*Y + Σb\μb)
+
+    posteriorshiftb = MvNormal(μpostb, makematrixsymmetric(Σpostb))
+
 
     #---------------------------------------------------------------------
     # Functions for predicting on test data
@@ -244,6 +247,5 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
     # • prediction function
     # • posterior of shift parameter
 
-    result.minimum, predictTest, MvNormal(μpostb, makematrixsymmetric(Σpostb))
-
+    result.minimum, predictTest, posteriorshiftb
 end
