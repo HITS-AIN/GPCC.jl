@@ -235,18 +235,3 @@ function gpcc2(tarray, yarray, stdarray; iterations = iterations, seed = 1, numb
     result.minimum, predictTest
 
 end
-
-
-
-
-
-function informuser(; seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                    JITTER = JITTER, ρmin = ρmin, Σb = Σb)
-
-    colourprint(@sprintf("Running gpcc2 with random seed %d\n", seed), foreground = :light_blue, bold = true)
-    @printf("\t iterations             = %d\n", iterations)
-    @printf("\t numberofrestarts       = %d\n", numberofrestarts)
-    @printf("\t JITTER                 = %e\n", JITTER)
-    @printf("\t ρmin                   = %f\n", ρmin)
-    @printf("\t Σb                     = "); map(x->@printf("%.3f ",x), diag(Σb)); @printf("\n")
-end
