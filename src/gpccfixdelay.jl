@@ -1,4 +1,4 @@
-function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -75,7 +75,7 @@ function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = it
 
         local scale, ρ = unpack(param)
 
-        local K = delayedCovariance(scale, delays, ρ, tarray)
+        local K = delayedCovariance(kernel, scale, delays, ρ, tarray)
 
         local KSobsB = K + Sobs + B
 
@@ -131,7 +131,7 @@ function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = it
 
     @show scale, ρ = unpack(paramopt)
 
-    K = delayedCovariance(scale, delays, ρ, tarray)
+    K = delayedCovariance(kernel, scale, delays, ρ, tarray)
 
     KSobsB = K + Sobs + B
 
@@ -153,10 +153,10 @@ function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = it
         B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(scale, delays, ρ, tarray, ttest) + B✴
+        kB✴ = delayedCovariance(kernel, scale, delays, ρ, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(scale, delays, ρ, ttest) + B✴✴
+        cB = delayedCovariance(kernel, scale, delays, ρ, ttest) + B✴✴
 
         # full predictive covariance
         Σpred = cB - kB✴' * (KSobsB \ kB✴)

@@ -1,5 +1,5 @@
 ##############################################################################
-function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, numberofrestarts = 1, numberoffolds = 5, plotting = false)
+function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false)
 ##############################################################################
 
     # let user know what is run
@@ -66,7 +66,7 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
 
 
         # Run deconvolution
-        _,predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)
+        _,predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; kernel = kernel, delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)
 
         # evaluate on held out test data
         fitness[foldindex] = predict(ttest, ytest, stest)

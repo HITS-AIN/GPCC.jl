@@ -1,4 +1,4 @@
-function delayedCovariance(scale, delays, ℓ², x, y)
+function delayedCovariance(kernel, scale, delays, ℓ², x, y)
 
     @assert(all(scale .> 0))
 
@@ -24,7 +24,7 @@ function delayedCovariance(scale, delays, ℓ², x, y)
 
         for j in 1:L
 
-            B[Block(i,j)] = [scale[i] * scale[j] * rbf(x₁-delays[i],x₂-delays[j]; ℓ²=ℓ²)  for x₁ in x[i], x₂ in y[j]]
+            B[Block(i,j)] = [scale[i] * scale[j] * kernel(x₁-delays[i],x₂-delays[j]; ℓ²=ℓ²)  for x₁ in x[i], x₂ in y[j]]
 
         end
 
@@ -35,4 +35,4 @@ function delayedCovariance(scale, delays, ℓ², x, y)
 end
 
 
-delayedCovariance(scale, delays, ℓ², x) = delayedCovariance(scale, delays, ℓ², x, x)
+delayedCovariance(kernel, scale, delays, ℓ², x) = delayedCovariance(kernel, scale, delays, ℓ², x, x)

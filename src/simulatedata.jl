@@ -50,7 +50,7 @@ function simulatedata(; seed = 1)
     # Define Gaussian process to draw noisy targets
     #---------------------------------------------------------------------
 
-    C = delayedCovariance(scale, delays, ℓ², t)
+    C = delayedCovariance(matern32, scale, delays, ℓ², t)
 
     let
 

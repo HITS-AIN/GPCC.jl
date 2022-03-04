@@ -16,6 +16,18 @@ rbf(xᵢ,xⱼ ; ℓ²=1.0) = exp(-0.5*(xᵢ-xⱼ)^2/(2ℓ²))
 
 #---------------------------------------------------
 
+function matern32(xᵢ,xⱼ ; ℓ²=1.0)
+
+    ℓ = sqrt(ℓ²)
+
+    r = norm(xᵢ - xⱼ)
+
+    (1 + sqrt(3)*r/ℓ) * exp(- sqrt(3)*r/ℓ)
+
+end
+
+#---------------------------------------------------
+
 function Qmatrix(Narray)
 
     L = length(Narray) # number of time series
