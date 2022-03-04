@@ -79,7 +79,7 @@ function simulatedata(; σ = 0.1, seed = 1, N = [50; 40; 30], ρ = 1.75)
 
     legend()
 
-    return t, y, σ
+    return t, y, [σ*ones(size(yᵢ)) for yᵢ in y]
 
 
 end
