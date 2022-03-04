@@ -1,9 +1,9 @@
 ##############################################################################
-function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delay = delay, minimumSqLen = minimumSqLen, iterations = 1, seedcv = 1, numberofrestarts = 1, numberoffolds = 5, plotting = false)
+function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, numberofrestarts = 1, numberoffolds = 5, plotting = false)
 ##############################################################################
 
     # let user know what is run
-    str = @sprintf("\nRunning CV with %d number of folds for delay %f\n\n", numberoffolds, delay)
+    str = @sprintf("\nRunning CV with %d number of folds\n\n", numberoffolds)
     print(Crayon(foreground = :cyan, bold = true), @sprintf("%s", str), Crayon(reset = true))
 
 
@@ -66,8 +66,7 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
 
 
         # Run deconvolution
-        predict =  @suppress gpcc2(ttrain, ytrain, strain, delay; minimumSqLen = minimumSqLen, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)
-
+        _,predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)
 
         # evaluate on held out test data
         fitness[foldindex] = predict(ttest, ytest, stest)
