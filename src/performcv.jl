@@ -62,8 +62,7 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
         stest  = [stdarray[i][testidx[i]]  for i in 1:numberofbands]
 
         str = @sprintf("\n--- fold %d train size is %d, test size is %d ---\n", foldindex, sum(length.(ttrain)), sum(length.(ttest)))
-        print(Crayon(foreground = :light_blue, bold = true), @sprintf("%s", str), Crayon(reset = true))
-
+        colourprint(str, foreground = :light_blue, bold = true)
 
         # Run deconvolution
         predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; kernel = kernel, delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)[2]
