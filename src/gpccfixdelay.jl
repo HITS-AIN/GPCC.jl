@@ -49,7 +49,7 @@ function gpccfixdelay(tarray, yarray, stdarray; delays = delays, iterations = it
     #---------------------------------------------------------------------
 
     informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                JITTER = JITTER, ρmin = ρmin, Σb = Σb)
+                JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
 
 
     #---------------------------------------------------------------------
