@@ -1,6 +1,6 @@
 module GPCC
 
-    using PyPlot, Crayons, BlockArrays, Random
+    using PyPlot, BlockArrays, Random
 
     using Optim, Distributions, LinearAlgebra, StatsFuns
 
