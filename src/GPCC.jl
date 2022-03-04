@@ -2,9 +2,9 @@ module GPCC
 
     using PyPlot, Crayons, BlockArrays, Random
 
-    using Optim, Distributions, LinearAlgebra, MiscUtil
+    using Optim, Distributions, LinearAlgebra, StatsFuns
 
-    using Printf, MiscUtil
+    using Printf, MiscUtil, Suppressor
 
     using MLBase, StatsFuns
 
@@ -21,6 +21,12 @@ module GPCC
 
     include("gpcc2.jl")
 
-    export gpcc2vi, simulatedata, gpcc2
+    include("gpccfixdelay.jl")
+
+    include("performcv.jl")
+
+    include("getprobabilities.jl")
+
+    export gpcc2vi, simulatedata, gpcc2, gpccfixdelay, performcv, getprobabilities
 
 end
