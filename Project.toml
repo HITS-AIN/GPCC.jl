@@ -1,11 +1,11 @@
 name = "GPCC"
 uuid = "4498ab02-56af-48f6-b5af-4c1c07c71523"
 authors = ["ngiann <ngiann@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.8"
 
 [deps]
+ApproximateVI = "e67a2193-b68a-469d-be77-24baf3975c82"
 BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
-Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MLBase = "f0e99cf1-93fa-52ec-9ecc-5026115318e0"
@@ -15,9 +15,16 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
+Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 
 [compat]
 PyPlot = "2"
+StatsFuns = "0.9"
+ApproximateVI = "0.1"
+BlockArrays = "0.16"
+Distributions = "0.25"
+MLBase = "0.9"
+Suppressor = "0.2"
 julia = "1"
 
 [extras]
