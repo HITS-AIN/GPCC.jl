@@ -15,7 +15,18 @@ add GPCC
 ```
 
 The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata`, `getprobabilities` and `performcv`.
-These functions can be queried in help model at the Julia REPL.
+These functions can be queried in help mode at the Julia REPL. 
+
+In case you are installing ProbabilisticFluxVariationGradient to an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
+
+```
+mkdir("myGPCC")
+cd("myGPCC")
+# press `]` to enter package mode:
+(@v1.6) pkg> activate .
+```
+and use this environment for installing and working with the package.
+Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
 
 
 ## Experimental results
