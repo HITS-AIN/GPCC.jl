@@ -1,6 +1,18 @@
-# GPCC.jl
+# Gaussian Process Cross Correlation
 
-Gaussian Process Cross Correlation
+
+
+# How to use
+
+Apart from cloning, an easy way of using the package is the following:
+
+1 - Add the registry [AINJuliaRegistry](https://github.com/HITS-AIN/AINJuliaRegistry).
+
+2 - Switch into "package mode" with ```]``` and add the package with
+```
+add GPCC
+```
+
 
 See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
