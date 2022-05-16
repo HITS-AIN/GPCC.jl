@@ -42,6 +42,11 @@ We use the package [GPCCVirialDatasets](https://github.com/ngiann/GPCCVirialData
 ```
 using GPCC, GPCCVirialDatasets
 
+# Following packages need to be independently installed. 
+# ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
+using ProgressMeter, Suppressor 
+
+
 # load data
 tobs, yobs, σobs, _ = readdataset(source="Mrk6")
 
@@ -61,17 +66,10 @@ length(delays)
 
 # We want to run cross-validation for all candidate delay vectors.
 # try true delays
-q = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=7, delays = [0;2;6], kernel = GPCC.matern32);
-
-# try perturbed delay
-q2 = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=7, delays = [0;2.3;5.8], kernel = GPCC.matern32);
+out = @showprogress map((@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = candidatedelay, kernel = GPCC.matern32)), delays)
 
 # estimate posterior probability
-getprobabilities([q,q2])
+getprobabilities(out)
 
-# output is:
-#2-element Vector{Float64}:
-# 0.6356097291597814
-# 0.3643902708402206
 
 ```
