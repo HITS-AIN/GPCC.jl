@@ -20,7 +20,7 @@ Returned outputs
 - `σobs`: Array of error measurements.
 
 An example of how the data are organised is given below.
-Note that function [`gpccfixdelay`](@ref) expects that the data passed to it
+Note that function [`gpcc`](@ref) expects that the data passed to it
 is organised in this exact same way.
 
 # Example
