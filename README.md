@@ -1,5 +1,6 @@
 # Gaussian Process Cross Correlation
 
+Julia implementation of Gaussian Process Cross Correlation model.
 
 
 ## How to use
@@ -13,12 +14,18 @@ Apart from cloning, an easy way of using the package is the following:
 add GPCC
 ```
 
-## 
+The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata`, `getprobabilities` and `performcv`.
+These functions can be queried in help model at the Julia REPL.
 
+
+## Experimental results
 
 See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
-Example:
+
+## Example using a real dataset
+
+
 ```
 tobs, yobs, σobs = simulatedata(seed=1, σ=1, N=[1;1;1]*75, ρ=5);
 
