@@ -100,7 +100,7 @@ We repeat the script from above with minor changes.
 tobs, yobs, σobs, _ = readdataset(source="Mrk6")
 
 # Let's look at how data are organised. All of the three arrays have the same structure. They are all arrays of arrays.
-display(type(tobs)), display(type(yobs)), display(type(σobs))
+display(typeof(tobs)), display(typeof(yobs)), display(typeof(σobs))
 
 # Each array contains 2 inner arrays, one for each observed band (The number of bands is referred to as L in the paper).
 length.(tobs)
