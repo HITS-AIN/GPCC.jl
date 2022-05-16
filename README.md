@@ -59,7 +59,7 @@ length.(yobs)
 length.(σobs)
 
 # We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
-delays = [[0;d] for d in 0:0.2:120]
+delays = [[0;d] for d in 0:0.2:100]
 
 # Check number of candidate delay vectors
 length(delays)
@@ -70,7 +70,7 @@ length(delays)
 @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2])
 
 # Do proper run 
-out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays)
+out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays)
 
 # estimate posterior probability
 getprobabilities(out)
