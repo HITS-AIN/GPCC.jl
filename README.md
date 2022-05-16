@@ -74,6 +74,53 @@ out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stda
 
 # estimate posterior probability
 getprobabilities(out)
+```
+
+## Example using a real dataset on multiple cores
+
+The above example can be easily be parallelised, i.e. we can try out the candidate delays in parallel.
+We need to start julia with multiple processes e.g. "julia -p 8" starts Julia with 8 workers.
+Alternatively, we can create more workers within Julia with:
+```
+using Distributed
+addprocs(8
+```
+
+We repeat the script from above with minor changes.
+
+```
+@everywhere using GPCC, GPCCVirialDatasets
+
+# Following packages need to be independently installed. 
+# ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
+@everywhere using ProgressMeter, Suppressor 
 
 
+# load data
+tobs, yobs, σobs, _ = readdataset(source="Mrk6")
+
+# Let's look at how data are organised. All of the three arrays have the same structure. They are all arrays of arrays.
+display(type(tobs)), display(type(yobs)), display(type(σobs))
+
+# Each array contains 2 inner arrays, one for each observed band (The number of bands is referred to as L in the paper).
+length.(tobs)
+length.(yobs)
+length.(σobs)
+
+# We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
+delays = [[0;d] for d in 0:0.2:100]
+
+# Check number of candidate delay vectors
+length(delays)
+
+# We want to run cross-validation for all candidate delay vectors.
+
+# Do "warmup" first for Julia
+@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2])
+
+# Do proper run 
+out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays)
+
+# estimate posterior probability
+getprobabilities(out)
 ```
