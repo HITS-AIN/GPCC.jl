@@ -36,10 +36,30 @@ See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
 ## Example using a real dataset
 
+We use the package [GPCCVirialDatasets](https://github.com/ngiann/GPCCVirialDatasets.jl) to access real observations.
+
 
 ```
-tobs, yobs, σobs = simulatedata(seed=1, σ=1, N=[1;1;1]*75, ρ=5);
+using GPCC, GPCCVirialDatasets
 
+# load data
+tobs, yobs, σobs, _ = readdataset(source="Mrk6")
+
+# Let's look at how data are organised. All of the three arrays have the same structure. They are all arrays of arrays.
+display(type(tobs)), display(type(yobs)), display(type(σobs))
+
+# Each array contains 2 inner arrays, one for each observed band (The number of bands is referred to as L in the paper).
+length.(tobs)
+length.(yobs)
+length.(σobs)
+
+# We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
+delays = [[0;d] for d in 0:0.2:120]
+
+# Check number of candidate delay vectors
+length(delays)
+
+# We want to run cross-validation for all candidate delay vectors.
 # try true delays
 q = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=7, delays = [0;2;6], kernel = GPCC.matern32);
 
