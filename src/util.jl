@@ -1,6 +1,6 @@
 function informuser(; seed = seed, iterations = iterations, numberofrestarts = numberofrestarts, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
 
-    colourprint(@sprintf("Running gpcc2vi with random seed %d\n", seed), foreground = :light_blue, bold = true)
+    colourprint(@sprintf("Running with random seed %d\n", seed), foreground = :light_blue, bold = true)
     @printf("\t iterations             = %d\n", iterations)
     @printf("\t numberofrestarts       = %d\n", numberofrestarts)
     @printf("\t JITTER                 = %e\n", JITTER)

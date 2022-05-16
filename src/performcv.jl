@@ -1,11 +1,50 @@
-##############################################################################
+"""
+out = performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false)
+
+Performs cross-validation for Gaussian Process Cross Correlation (GPCC) model.
+
+Data passed to the function are organised as arrays of arrays.
+The outer array contains L number of inner arrays where L is the number of bands.
+The l-th inner arrays hold the data pertaining to the l-th band.
+
+See also [`getprobabilities`](@ref).
+
+Input arguments
+===============
+
+- `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
+- `yarray`: Array of arrays of fluxes. Same structure as `tarray`
+- `stdarray`: Array of error measurements. Same structure as `tarray`
+- `kernel`: Specifies GP kernel function. Options are GPCC.OU / GPCC.rbf / GPCC.matern32
+- `delays`: L-dimensional vector of delays.
+- `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
+- `seedcv`: Random seed that controls the random sampling of initial solutions for GPCC and the random generation of cross-validation folds.
+- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation.
+- `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
+- `ρmin`: minimum value for lengthscale of GP.
+- `ρmax`: maximum value for lengthscale of GP.
+
+Output
+===============
+
+out: vector of test log-likelihoods for each fold
+
+# Example
+```julia-repl
+
+julia> tobs, yobs, σobs = simulatedata(); # simulate data with default delays [0;2;6]
+julia> out1 = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = [0;2;6], kernel = GPCC.matern32); # perform CV with true delays
+julia> out2 = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = [0;2.1;5.9], kernel = GPCC.matern32); # julia> # perform CV with perturbed delays
+julia> getprobabilities([out1, out2]) # estimate posterior probabilities
+```
+"""
 function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false)
-##############################################################################
+
 
     # let user know what is run
     str = @sprintf("\nRunning CV with %d number of folds\n\n", numberoffolds)
     colourprint(str, foreground = :cyan, bold = true)
-    
+
 
 
     numberofbands = length(yarray)

@@ -1,3 +1,47 @@
+"""
+    minopt, pred, posteriorshiftb = gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
+
+Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
+
+Data passed to the function are organised as arrays of arrays.
+The outer array contains L number of inner arrays where L is the number of bands.
+The l-th inner arrays hold the data pertaining to the l-th band.
+See [`simulatedata`](@ref) for an example of how data are organised.
+
+Input arguments
+===============
+
+- `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
+- `yarray`: Array of arrays of fluxes. Same structure as `tarray`
+- `stdarray`: Array of error measurements. Same structure as `tarray`
+- `kernel`: Specifies GP kernel function. Options are GPCC.OU / GPCC.rbf / GPCC.matern32
+- `delays`: L-dimensional vector of delays.
+- `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
+- `seed`: Random seed controls the random sampling of initial solution.
+- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation.
+- `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
+- `ρmin`: minimum value for lengthscale of GP.
+- `ρmax`: maximum value for lengthscale of GP.
+
+
+Returned arguments
+==================
+- `minopt`: negative log-likelihood reached when optimising GP hyperparameters.
+- `predict`: function for predicting on out-of-sample data.
+- `posteriorshiftb`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
+
+# Example
+```julia-repl
+julia> tobs, yobs, σobs = simulatedata(); # produce synthetic data
+julia> tobs, yobs, σobs = simulatedata(); # fit GPCC
+julia> minopt, pred, posteriorshiftb = gpccfixdelay(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000)
+julia> trange = collect(-10:0.1:25); # define time interval for predictions
+julia> μpred, σpred = pred(trange) # obtain predictions
+julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
+julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
+julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
+```
+"""
 function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
