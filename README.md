@@ -2,7 +2,7 @@
 
 
 
-# How to use
+## How to use
 
 Apart from cloning, an easy way of using the package is the following:
 
@@ -12,6 +12,8 @@ Apart from cloning, an easy way of using the package is the following:
 ```
 add GPCC
 ```
+
+## 
 
 
 See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
