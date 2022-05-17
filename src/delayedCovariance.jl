@@ -1,9 +1,9 @@
-function delayedCovariance(kernel, scale, delays, ℓ², x, y)
+function delayedCovariance(kernel, scale, delays, ρ, x, y)
 
     @assert(all(scale .> 0))
 
-    if ℓ² <= 0
-        error(@sprintf("ℓ²=%.8f is <= 0", ℓ²))
+    if ρ <= 0
+        error(@sprintf("ρ=%.8f is <= 0", ρ))
     end
 
     # number of bands
@@ -24,7 +24,7 @@ function delayedCovariance(kernel, scale, delays, ℓ², x, y)
 
         for j in 1:L
 
-            B[Block(i,j)] = [scale[i] * scale[j] * kernel(x₁-delays[i],x₂-delays[j]; ℓ²=ℓ²)  for x₁ in x[i], x₂ in y[j]]
+            B[Block(i,j)] = [scale[i] * scale[j] * kernel(x₁-delays[i],x₂-delays[j]; ρ=ρ)  for x₁ in x[i], x₂ in y[j]]
 
         end
 
@@ -35,4 +35,4 @@ function delayedCovariance(kernel, scale, delays, ℓ², x, y)
 end
 
 
-delayedCovariance(kernel, scale, delays, ℓ², x) = delayedCovariance(kernel, scale, delays, ℓ², x, x)
+delayedCovariance(kernel, scale, delays, ρ, x) = delayedCovariance(kernel, scale, delays, ρ, x, x)
