@@ -1,6 +1,6 @@
 # Gaussian Process Cross Correlation
 
-Julia implementation of Gaussian Process Cross Correlation model.
+A Julia implementation of the Gaussian Process Cross Correlation model.
 
 
 ## How to use
@@ -15,9 +15,9 @@ add GPCC
 ```
 
 The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata`, `getprobabilities` and `performcv`.
-These functions can be queried in help mode at the Julia REPL. 
+These functions can be queried in help mode in the Julia REPL. 
 
-In case you are installing ProbabilisticFluxVariationGradient to an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
+In case you are installing GPCC to an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
 
 ```
 mkdir("myGPCC")
