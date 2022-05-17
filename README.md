@@ -1,6 +1,6 @@
 # Gaussian Process Cross Correlation
 
-Julia implementation of Gaussian Process Cross Correlation model.
+A Julia implementation of the Gaussian Process Cross Correlation model.
 
 
 ## How to use
