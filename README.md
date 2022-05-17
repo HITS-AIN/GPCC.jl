@@ -94,6 +94,7 @@ We discard the lines of code inspecting the size and type of the variables.
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
+
 @everywhere using ProgressMeter, Suppressor # <----- ⚠ this line is different to above script ⚠
 
 
@@ -102,7 +103,6 @@ tobs, yobs, σobs, _ = readdataset(source="Mrk6")
 
 # We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
 delays = [[0;d] for d in 0:0.2:100]
-
 
 # We want to run cross-validation for all candidate delay vectors in parallel!
 
