@@ -45,13 +45,13 @@ function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterat
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -75,7 +75,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
 
     Narray = length.(tarray)
 
-    @assert(L == length(delays) == length(yarray) == length(tarray) == length(stdarray))
+    @assert(L == length(τ) == length(yarray) == length(tarray) == length(stdarray))
 
 
     #---------------------------------------------------------------------
@@ -111,11 +111,11 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
 
         @assert(length(param) == L + 1)
 
-        local scale  = makepositive.(param[1+0L:1*L]) .+ 1e-4
+        local α  = makepositive.(param[1+0L:1*L]) .+ 1e-4
 
-        local ρ      = transformbetween(param[L+1], ρmin, ρmax)
+        local ρ  = transformbetween(param[L+1], ρmin, ρmax)
 
-        return scale, ρ
+        return α, ρ
 
     end
 
@@ -126,9 +126,9 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
 
     function objective(param)
 
-        local scale, ρ = unpack(param)
+        local α, ρ = unpack(param)
 
-        local K = delayedCovariance(kernel, scale, delays, ρ, tarray)
+        local K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
         local KSobsB = K + Sobs + B
 
@@ -154,12 +154,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
 
     initialρ() = rand(Uniform(ρmin+1e-3, ρmax-1e-3))
 
-    initialscales() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+    initialα() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
 
     function getsolution()
 
-        randomsolutions = [[invmakepositive.(initialscales()); invtransformbetween(initialρ(), ρmin, ρmax)] for i in 1:initialrandom]
+        randomsolutions = [[invmakepositive.(initialα()); invtransformbetween(initialρ(), ρmin, ρmax)] for i in 1:initialrandom]
 
         bestindex = argmin(map(safeobj, randomsolutions))
 
@@ -182,9 +182,9 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
     # instantiate learned matrix and observed variance parameter
     #---------------------------------------------------------------------
 
-    @show scale, ρ = unpack(paramopt)
+    @show α, ρ = unpack(paramopt)
 
-    K = delayedCovariance(kernel, scale, delays, ρ, tarray)
+    K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
     KSobsB = K + Sobs + B
 
@@ -216,10 +216,10 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
         B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(kernel, scale, delays, ρ, tarray, ttest) + B✴
+        kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(kernel, scale, delays, ρ, ttest) + B✴✴
+        cB = delayedCovariance(kernel, α, τ, ρ, ttest) + B✴✴
 
         # full predictive covariance
         Σpred = cB - kB✴' * (KSobsB \ kB✴)
