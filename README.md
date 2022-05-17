@@ -79,7 +79,7 @@ getprobabilities(out)
 ## Example using a real dataset on multiple cores
 
 The above example can be easily be parallelised, i.e. we can try out the candidate delays in parallel.
-We need to start julia with multiple processes e.g. "julia -p 8" starts Julia with 8 workers.
+We need to start julia with multiple processes e.g. "julia -p 16" starts Julia with 16 workers.
 Alternatively, we can create more workers within Julia with:
 ```
 using Distributed
@@ -89,37 +89,27 @@ addprocs(16) # put here number of available cores
 We repeat the script from above with minor changes.
 
 ```
-@everywhere using GPCC, GPCCVirialDatasets
+@everywhere using GPCC, GPCCVirialDatasets  # <----- this line is different to above script
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
-@everywhere using ProgressMeter, Suppressor 
+@everywhere using ProgressMeter, Suppressor # <----- this line is different to above script
 
 
 # load data
 tobs, yobs, σobs, _ = readdataset(source="Mrk6")
 
-# Let's look at how data are organised. All of the three arrays have the same structure. They are all arrays of arrays.
-display(typeof(tobs)), display(typeof(yobs)), display(typeof(σobs))
-
-# Each array contains 2 inner arrays, one for each observed band (The number of bands is referred to as L in the paper).
-length.(tobs)
-length.(yobs)
-length.(σobs)
-
 # We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
 delays = [[0;d] for d in 0:0.2:100]
 
-# Check number of candidate delay vectors
-length(delays)
 
-# We want to run cross-validation for all candidate delay vectors.
+# We want to run cross-validation for all candidate delay vectors in parallel!
 
 # Do "warmup" first for Julia
-@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()])
+@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()]) <----- this line is different to above script, we use pmap instead map
 
 # Do proper run 
-out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays)
+out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays) <----- this line is different to above script, we use pmap instead map
 
 # estimate posterior probability
 getprobabilities(out)
