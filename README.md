@@ -83,7 +83,7 @@ We need to start julia with multiple processes e.g. "julia -p 8" starts Julia wi
 Alternatively, we can create more workers within Julia with:
 ```
 using Distributed
-addprocs(8
+addprocs(8)
 ```
 
 We repeat the script from above with minor changes.
