@@ -13,13 +13,11 @@ module GPCC
 
     include("delayedCovariance.jl")
 
-    # include("gpccvi.jl")
-
     include("simulatedata.jl")
 
     include("util.jl")
 
-    # include("gpcc2.jl")
+    include("gpccfixdelay_verifications.jl")
 
     include("gpccfixdelay.jl")
 
