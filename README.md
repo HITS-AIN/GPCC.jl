@@ -86,14 +86,14 @@ using Distributed
 addprocs(16) # put here number of available cores
 ```
 
-We repeat the script from above with minor changes.
+We repeat the script from above with minor changes marker with ⚠.
 
 ```
-@everywhere using GPCC, GPCCVirialDatasets  # <----- this line is different to above script
+@everywhere using GPCC, GPCCVirialDatasets  # <----- ⚠ this line is different to above script ⚠
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
-@everywhere using ProgressMeter, Suppressor # <----- this line is different to above script
+@everywhere using ProgressMeter, Suppressor # <----- ⚠ this line is different to above script ⚠
 
 
 # load data
@@ -106,10 +106,10 @@ delays = [[0;d] for d in 0:0.2:100]
 # We want to run cross-validation for all candidate delay vectors in parallel!
 
 # Do "warmup" first for Julia
-@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()]) <----- this line is different to above script, we use pmap instead map
+@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()]) <----- ⚠ this line is different to above script, we use pmap instead map ⚠
 
 # Do proper run 
-out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays) <----- this line is different to above script, we use pmap instead map
+out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays) <----- ⚠ this line is different to above script, we use pmap instead map ⚠
 
 # estimate posterior probability
 getprobabilities(out)
