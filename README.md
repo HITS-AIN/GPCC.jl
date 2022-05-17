@@ -87,6 +87,7 @@ addprocs(16) # put here number of available cores
 ```
 
 We repeat the script from above with minor changes marker with ⚠.
+We discard the lines of code inspecting the size and type of the variables.
 
 ```
 @everywhere using GPCC, GPCCVirialDatasets  # <----- ⚠ this line is different to above script ⚠
