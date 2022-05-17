@@ -33,8 +33,7 @@ Returned arguments
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs = simulatedata(); # produce synthetic data
-julia> tobs, yobs, σobs = simulatedata(); # fit GPCC
-julia> minopt, pred, posteriorshiftb = gpccfixdelay(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000)
+julia> minopt, pred, posteriorshiftb = gpccfixdelay(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
