@@ -90,12 +90,12 @@ We repeat the script from above with minor changes marker with ⚠.
 We discard the lines of code inspecting the size and type of the variables.
 
 ```
-@everywhere using GPCC, GPCCVirialDatasets  # <----- ⚠ this line is different to above script ⚠
+@everywhere using GPCC, GPCCVirialDatasets  # ⚠ @everywhere makes packages available to all workers ⚠
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
 
-@everywhere using ProgressMeter, Suppressor # <----- ⚠ this line is different to above script ⚠
+@everywhere using ProgressMeter, Suppressor # ⚠ again we use @everywhere ⚠
 
 
 # load data
@@ -107,10 +107,10 @@ delays = [[0;d] for d in 0:0.2:100]
 # We want to run cross-validation for all candidate delay vectors in parallel!
 
 # Do "warmup" first for Julia
-@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()]) <----- ⚠ this line is different to above script, we use pmap instead map ⚠
+@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()]) # ⚠ use pmap instead map ⚠
 
 # Do proper run 
-out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays) <----- ⚠ this line is different to above script, we use pmap instead map ⚠
+out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays) # ⚠ use pmap instead map ⚠
 
 # estimate posterior probability
 getprobabilities(out)
