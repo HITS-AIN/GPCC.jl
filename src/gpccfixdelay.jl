@@ -33,7 +33,7 @@ Returned arguments
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs = simulatedata(); # produce synthetic data
-julia> minopt, pred, posteriorshiftb = gpccfixdelay(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
+julia> minopt, pred, posteriorshiftb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
@@ -45,7 +45,7 @@ function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterat
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax)
 
 
 end
@@ -152,7 +152,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Call optimiser and initialise with random search
     #---------------------------------------------------------------------
 
-    initialρ() = rand(Uniform(ρmin+1e-3, ρmax-1e-3))
+    initialρ() = rand(rg, Uniform(ρmin+1e-3, ρmax-1e-3))
 
     initialα() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
