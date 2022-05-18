@@ -2,6 +2,7 @@
 
 A Julia implementation of the Gaussian Process Cross Correlation model.
 
+![Alt text](logo.png)
 
 ## How to use
 
