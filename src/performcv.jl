@@ -1,5 +1,5 @@
 """
-out = performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false)
+out = performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
 
 Performs cross-validation for Gaussian Process Cross Correlation (GPCC) model.
 
@@ -21,8 +21,8 @@ Input arguments
 - `seedcv`: Random seed that controls the random sampling of initial solutions for GPCC and the random generation of cross-validation folds.
 - `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation.
 - `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
-- `ρmin`: minimum value for lengthscale of GP.
-- `ρmax`: maximum value for lengthscale of GP.
+- `rhomin`: minimum value for lengthscale ρ of GP.
+- `rhomax`: maximum value for lengthscale ρ of GP.
 
 Output
 ===============
@@ -38,7 +38,7 @@ julia> out2 = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=100
 julia> getprobabilities([out1, out2]) # estimate posterior probabilities, first entry corresponding to true delays should be higher
 ```
 """
-function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false)
+function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
 
 
     # let user know what is run
@@ -104,7 +104,7 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
         colourprint(str, foreground = :light_blue, bold = true)
 
         # Run deconvolution
-        predict =  @suppress gpccfixdelay(ttrain, ytrain, strain; kernel = kernel, delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv)[2]
+        predict =  @suppress gpcc(ttrain, ytrain, strain; kernel = kernel, delays = delays, numberofrestarts = numberofrestarts, iterations = iterations, seed = seedcv, rhomin = rhomin, rhomax = rhomax)[2]
 
         # evaluate on held out test data
         fitness[foldindex] = predict(ttest, ytest, stest)

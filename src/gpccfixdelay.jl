@@ -1,5 +1,5 @@
 """
-    minopt, pred, posteriorshiftb = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
+    minopt, pred, posteriorshiftb = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, rhomin = 0.1, rhomax = 20.0)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -20,8 +20,8 @@ Input arguments
 - `seed`: Random seed controls the random sampling of initial solution.
 - `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation.
 - `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
-- `ρmin`: minimum value for lengthscale of GP.
-- `ρmax`: maximum value for lengthscale of GP.
+- `rhomin`: minimum value for lengthscale ρ of GP.
+- `rhomax`: maximum value for lengthscale ρ of GP.
 
 
 Returned arguments
@@ -41,11 +41,11 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, ρmin = 0.1, ρmax = 20.0)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, rhomin = 0.1, rhomax = 20.0)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
 
 
 end
