@@ -39,11 +39,11 @@ See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
 ## Example using a real dataset
 
-We use the package [GPCCVirialDatasets](https://github.com/ngiann/GPCCVirialDatasets.jl) to access real observations.
+We use the package [GPCCData](https://github.com/ngiann/GPCCData.jl) to access real observations.
 
 
 ```
-using GPCC, GPCCVirialDatasets
+using GPCC, GPCCData
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
@@ -93,7 +93,9 @@ We repeat the script from above with minor changes marker with ⚠.
 We discard the lines of code inspecting the size and type of the variables.
 
 ```
-@everywhere using GPCC, GPCCVirialDatasets  # ⚠ @everywhere makes packages available to all workers ⚠
+using GPCCData
+
+@everywhere using GPCC  # ⚠ @everywhere makes packages available to all workers ⚠
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
