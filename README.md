@@ -1,8 +1,6 @@
-# Gaussian Process Cross Correlation
 
-
+<h1 align="center">GPCC.jl</h1>
 <p align="center">
-  <b>A Julia implementation of the Gaussian Process Cross Correlation model.</b><br>
   <img width="322" height="210" src=logo.png>
 </p>
 
