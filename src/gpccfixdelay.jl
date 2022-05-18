@@ -152,7 +152,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, delays = delays
     # Call optimiser and initialise with random search
     #---------------------------------------------------------------------
 
-    initialρ() = rand(Uniform(ρmin+1e-3, ρmax-1e-3))
+    initialρ() = rand(Uniform(rg, ρmin+1e-3, ρmax-1e-3))
 
     initialscales() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
