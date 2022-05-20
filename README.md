@@ -89,13 +89,25 @@ The call returns three outputs:
 
 ## ▶ How to make predictions
 
-Having fitted the observed data, we can now make predictions. We repeat the code snipped below:
+Having fitted the model to the data, we can now make predictions. We repeat the code snipped below:
 ```
 using GPCC
 using PyPlot # must be indepedently installed
 tobs, yobs, σobs = simulatedata();
 minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000); 
 ```
+
+We define the interval over which we want to predict and use `pred`:
+```
+t_test = collect(-10:0.1:25);
+μpred, σpred = pred(t_test);
+```
+
+Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers to predictions for the $l$-th band.
+
+
+
+
 
 
 
