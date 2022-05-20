@@ -8,7 +8,7 @@
 
 
 
-## How to use
+## 💾 Installation
 
 Apart from cloning, an easy way of using the package is the following:
 
@@ -34,12 +34,81 @@ and use this environment for installing and working with the package.
 Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
 
 
-## Experimental results
+
+## 🔵 Simulated data
+
+Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
+```
+using GPCC
+tobs, yobs, σobs = simulatedata() # output omitted
+```
+
+A figure should show up displaying simulated light curves.
+More options can be found at help mode, `?simulatedata`.
+
+It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in exact same way.
+First of all, we note that all three returned outputs are vectors containing vector elements (i.e. arrays of arrays) and  that they share the same size:
+```
+typeof(tobs), typeof(yobs), typeof(σobs) 
+size(tobs), size(yobs), size(σobs)
+```
+Each output contains data for 3 bands.
+`tobs` contains the observed times. `tobs[1]` contains the observed times for the 1st band, `tobs[2]` for the 2nd band and so on.
+Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1]` the error measurements for the 1st band.
+We can plot the data pertaining to the 3rd band as an example:
+
+```
+using PyPlot # must be indepedently installed
+errorbar(tobs[3], yobs[3], yerr=σobs[3], fmt="o", label="3rd band")
+```
+
+
+
+## 🔵 How to fit a dataset with `gpcc`
+
+Having generated the simulated data, we will now fit them with the GPCC model. To that end we use the function `gpcc`. Options of `gpcc` can be queried in help mode.
+
+```
+using GPCC
+
+tobs, yobs, σobs = simulatedata();
+
+# We choose the rbf kernel. Other choices are GPCC.OU / GPCC.rbf / GPCC.matern32.
+# We fit the model for the given delays 0, 2, 6. 
+# Note that without loss of generality we can always set the delay of the 1st band equal to zero.
+# The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
+
+minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000); 
+
+```
+The call returns three outputs:
+- the (local) optimum marginal likelihood `minopt` reached by the optimiser.
+- a function `pred` for making predictions.
+- the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
+
+
+## 🔵 How to make predictions
+
+Having fitted the observed data, we can now make predictions. We repeat the code snipped below:
+```
+using GPCC
+using PyPlot # must be indepedently installed
+tobs, yobs, σobs = simulatedata();
+minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000); 
+```
+
+
+
+## 🔵 How to decide between candidate delays using `performcv`
+
+## 🔵 How to use `performcv` on multiple cores
+
+## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
 See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
 
-## Example using a real dataset
+## 🔵 Example using a real dataset (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
 We use the package [GPCCData](https://github.com/ngiann/GPCCData.jl) to access real observations.
 
@@ -81,7 +150,7 @@ out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stda
 getprobabilities(out)
 ```
 
-## Example using a real dataset on multiple cores
+## 🔵 Example using a real dataset on multiple cores (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
 The above example can be easily be parallelised, i.e. we can try out the candidate delays in parallel.
 We need to start julia with multiple processes e.g. "julia -p 16" starts Julia with 16 workers.
