@@ -54,7 +54,7 @@ size(tobs), size(yobs), size(σobs)
 ```
 Each output contains data for 3 bands.
 `tobs` contains the observed times. `tobs[1]` contains the observed times for the 1st band, `tobs[2]` for the 2nd band and so on.
-Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1]` the error measurements for the 1st band.
+Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1]` the error measurements for the 1st band and so on.
 We can plot the data pertaining to the 3rd band as an example:
 
 ```
