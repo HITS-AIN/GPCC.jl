@@ -8,7 +8,7 @@
 
 
 
-## How to use
+## 💾 Installation
 
 Apart from cloning, an easy way of using the package is the following:
 
@@ -32,6 +32,12 @@ cd("myGPCC")
 ```
 and use this environment for installing and working with the package.
 Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
+
+## Simulated data
+
+## How to fit a dataset with `gpcc`
+
+## How to decide between candidate delays using `performcv`
 
 
 ## Experimental results
