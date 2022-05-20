@@ -101,6 +101,7 @@ minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, dela
 
 ## 🔵 How to decide between candidate delays using `performcv`
 
+## 🔵 How to use `performcv` on multiple cores
 
 ## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
@@ -149,7 +150,7 @@ out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stda
 getprobabilities(out)
 ```
 
-## 🔵 Example using a real dataset on multiple cores
+## 🔵 Example using a real dataset on multiple cores (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
 The above example can be easily be parallelised, i.e. we can try out the candidate delays in parallel.
 We need to start julia with multiple processes e.g. "julia -p 16" starts Julia with 16 workers.
