@@ -44,10 +44,19 @@ A figure should show up displaying simulated light curves.
 More options can be found at help mode, `?simulatedata`.
 
 It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in exact same way.
-First of all, we note that all three returned outputs are arrays of arrays and share the same size:
+First of all, we note that all three returned outputs are vectors containing vector elements (i.e. arrays of arrays) and  that they share the same size:
 ```
 typeof(tobs), typeof(yobs), typeof(σobs) 
 size(tobs), size(yobs), size(σobs)
+```
+Each output contains data for 3 bands.
+`tobs` contains the observed times. `tobs[1]` contains the observed times for the 1st band, `tobs[2]` for the 2nd band and so on.
+Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1]` the error measurements for the 1st band.
+We can plot the data pertaining to the first band as an example:
+
+```
+using PyPlot # must be indepedently installed
+errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band")
 ```
 
 
