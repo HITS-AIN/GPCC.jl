@@ -37,7 +37,7 @@ Having exited Julia, one can enter the created environment again by simply start
 
 ## ▶ How to simulate data
 
-Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
+Method `simulatedata` can be used to simulate data in 3 arbitrary (non-physical) bands:
 ```
 using GPCC
 tobs, yobs, σobs = simulatedata() # output omitted
