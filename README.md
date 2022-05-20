@@ -33,7 +33,7 @@ cd("myGPCC")
 and use this environment for installing and working with the package.
 Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
 
-## Simulated data
+## 🔵 Simulated data
 
 Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
 ```
@@ -61,17 +61,17 @@ errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band")
 
 
 
-## How to fit a dataset with `gpcc`
+## 🔵 How to fit a dataset with `gpcc`
 
-## How to decide between candidate delays using `performcv`
+## 🔵 How to decide between candidate delays using `performcv`
 
 
-## Experimental results
+## 🔵 Experimental results
 
 See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
 
-## Example using a real dataset
+## 🔵 Example using a real dataset
 
 We use the package [GPCCData](https://github.com/ngiann/GPCCData.jl) to access real observations.
 
@@ -113,7 +113,7 @@ out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stda
 getprobabilities(out)
 ```
 
-## Example using a real dataset on multiple cores
+## 🔵 Example using a real dataset on multiple cores
 
 The above example can be easily be parallelised, i.e. we can try out the candidate delays in parallel.
 We need to start julia with multiple processes e.g. "julia -p 16" starts Julia with 16 workers.
