@@ -159,11 +159,11 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     function getsolution()
 
-        randomsolutions = [[invmakepositive.(initialα()); invtransformbetween(initialρ(), ρmin, ρmax)] for i in 1:initialrandom]
+        local randomsolutions = [[invmakepositive.(initialα()); invtransformbetween(initialρ(), ρmin, ρmax)] for i in 1:initialrandom]
 
-        bestindex = argmin(map(safeobj, randomsolutions))
+        local bestindex = argmin(map(safeobj, randomsolutions))
 
-        opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-6)
+        local opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-6)
 
         optimize(safenegativeobj, randomsolutions[bestindex], NelderMead(), opt)
 
@@ -182,7 +182,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # instantiate learned matrix and observed variance parameter
     #---------------------------------------------------------------------
 
-    @show α, ρ = unpack(paramopt)
+    α, ρ = unpack(paramopt)
 
     K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
