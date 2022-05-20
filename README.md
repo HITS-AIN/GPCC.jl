@@ -33,6 +33,8 @@ cd("myGPCC")
 and use this environment for installing and working with the package.
 Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
 
+
+
 ## 🔵 Simulated data
 
 Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
@@ -69,12 +71,13 @@ Having generated the simulated data, we will now fit them with the GPCC model. T
 ```
 using GPCC
 
-tobs, yobs, σobs = simulatedata() # output omitted
+tobs, yobs, σobs = simulatedata();
 
 # We choose the rbf kernel. Other choices are GPCC.OU / GPCC.rbf / GPCC.matern32.
 # We fit the model for the given delays 0, 2, 6. 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero.
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
+
 minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000); 
 
 ```
