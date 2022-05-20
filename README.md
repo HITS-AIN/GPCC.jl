@@ -1,6 +1,11 @@
-# Gaussian Process Cross Correlation
 
-A Julia implementation of the Gaussian Process Cross Correlation model.
+<h1 align="center">GPCC.jl</h1>
+<p align="center">
+  <img width="253" height="165" src=logo.png>
+</p>
+
+
+
 
 
 ## How to use
@@ -17,7 +22,7 @@ add GPCC
 The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata`, `getprobabilities` and `performcv`.
 These functions can be queried in help mode in the Julia REPL. 
 
-In case you are installing GPCC to an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
+In case you are installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
 
 ```
 mkdir("myGPCC")
@@ -36,11 +41,11 @@ See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
 ## Example using a real dataset
 
-We use the package [GPCCVirialDatasets](https://github.com/ngiann/GPCCVirialDatasets.jl) to access real observations.
+We use the package [GPCCData](https://github.com/ngiann/GPCCData.jl) to access real observations.
 
 
 ```
-using GPCC, GPCCVirialDatasets
+using GPCC, GPCCData
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
@@ -90,7 +95,9 @@ We repeat the script from above with minor changes marker with ⚠.
 We discard the lines of code inspecting the size and type of the variables.
 
 ```
-@everywhere using GPCC, GPCCVirialDatasets  # ⚠ @everywhere makes packages available to all workers ⚠
+using GPCCData
+
+@everywhere using GPCC  # ⚠ @everywhere makes packages available to all workers ⚠
 
 # Following packages need to be independently installed. 
 # ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
