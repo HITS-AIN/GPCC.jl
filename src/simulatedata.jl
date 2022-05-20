@@ -33,6 +33,7 @@ julia> length.(tobs) # these three lines give us the number of observations per 
 julia> length.(yobs)
 julia> length.(σobs)
 julia> using PyPlot # needs to be indepedently installed.
+julia> figure(); title("first band")
 julia> errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band") # plot data of 1st band
 ```
 """
