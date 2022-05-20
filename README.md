@@ -79,11 +79,11 @@ minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, dela
 
 ```
 The call returns three outputs:
-- the (local) optimum marginal likelihood reached by the optimiser.
+- the (local) optimum marginal likelihood `minopt` reached by the optimiser.
 - a function `pred` for making predictions.
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 
-We now show how to use function `pred` for making predictions.
+We now show how to use method `pred` for making predictions.
 
 
 ## 🔵 How to decide between candidate delays using `performcv`
