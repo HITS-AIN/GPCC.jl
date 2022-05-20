@@ -35,7 +35,7 @@ Having exited Julia, one can enter the created environment again by simply start
 
 
 
-## ▶ Simulated data
+## ▶ How to simulate data
 
 Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
 ```
@@ -116,7 +116,7 @@ end
 
 
 
-
+## ▶ How to calculate log-likelihood on test data
 
 
 
