@@ -35,7 +35,7 @@ Having exited Julia, one can enter the created environment again by simply start
 
 
 
-## 🔵 Simulated data
+## ▶ Simulated data
 
 Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
 ```
@@ -64,7 +64,7 @@ errorbar(tobs[3], yobs[3], yerr=σobs[3], fmt="o", label="3rd band")
 
 
 
-## 🔵 How to fit a dataset with `gpcc`
+## ▶ How to fit a dataset with `gpcc`
 
 Having generated the simulated data, we will now fit them with the GPCC model. To that end we use the function `gpcc`. Options of `gpcc` can be queried in help mode.
 
@@ -87,7 +87,7 @@ The call returns three outputs:
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 
 
-## 🔵 How to make predictions
+## ▶ How to make predictions
 
 Having fitted the observed data, we can now make predictions. We repeat the code snipped below:
 ```
@@ -99,9 +99,9 @@ minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, dela
 
 
 
-## 🔵 How to decide between candidate delays using `performcv`
+## ▶ How to decide between candidate delays using `performcv`
 
-## 🔵 How to use `performcv` on multiple cores
+## ▶ How to use `performcv` on multiple cores
 
 ## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
