@@ -86,18 +86,28 @@ The call returns three outputs:
 - a function `pred` for making predictions.
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 
-We now show how to use method `pred` for making predictions.
+
+## 🔵 How to make predictions
+
+Having fitted the observed data, we can now make predictions. We repeat the code snipped below:
+```
+using GPCC
+using PyPlot # must be indepedently installed
+tobs, yobs, σobs = simulatedata();
+minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000); 
+```
+
 
 
 ## 🔵 How to decide between candidate delays using `performcv`
 
 
-## 🔵 Experimental results
+## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
 See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
 
 
-## 🔵 Example using a real dataset
+## 🔵 Example using a real dataset (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
 We use the package [GPCCData](https://github.com/ngiann/GPCCData.jl) to access real observations.
 
