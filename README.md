@@ -35,6 +35,23 @@ Having exited Julia, one can enter the created environment again by simply start
 
 ## Simulated data
 
+Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
+```
+tobs, yobs, σobs = simulatedata() # output omitted
+```
+
+A figure should show up displaying simulated light curves.
+More options can be found at help mode, `?simulatedata`.
+
+It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in exact same way.
+First of all, we note that all three returned outputs are arrays of arrays and share the same size:
+```
+typeof(tobs), typeof(yobs), typeof(σobs) 
+size(tobs), size(yobs), size(σobs)
+```
+
+
+
 ## How to fit a dataset with `gpcc`
 
 ## How to decide between candidate delays using `performcv`
