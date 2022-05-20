@@ -102,11 +102,16 @@ t_test = collect(-10:0.1:25);
 μpred, σpred = pred(t_test);
 ```
 
-Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers to predictions for the $l$-th band, e.g. `μpred[2]` and `σpred[2]` hold respectively the mean prediction and standard deviation of the $l$-band. We plot the predictions for the $2$-band:
+Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers to predictions for the $l$-th band, e.g. `μpred[2]` and `σpred[2]` hold respectively the mean prediction and standard deviation of the $l$-band. We plot the predictions for all bands:
 
 ```
-plot(t_test, μpred[2], "k-", label="2nd band")
-fill_between(t_test, μpred[2] + σpred[2], μpred[2] - σpred[2], color="k", alpha=0.3) # plot uncertainty tube
+colours = ["blue", "green", "orange"] # define colours
+
+for i in 1:3
+       plot(t_test, μpred[i], "-", colours[i])
+       fill_between(t_test, μpred[i] + σpred[i], μpred[i] - σpred[i], color=colours[i], alpha=0.3) # plot uncertainty tube
+end
+
 ```
 
 
