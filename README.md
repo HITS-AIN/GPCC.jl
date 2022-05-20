@@ -37,6 +37,7 @@ Having exited Julia, one can enter the created environment again by simply start
 
 Method `simulatedata` can be used to simulate data in 3 arbitrary bands:
 ```
+using GPCC
 tobs, yobs, σobs = simulatedata() # output omitted
 ```
 
@@ -52,16 +53,23 @@ size(tobs), size(yobs), size(σobs)
 Each output contains data for 3 bands.
 `tobs` contains the observed times. `tobs[1]` contains the observed times for the 1st band, `tobs[2]` for the 2nd band and so on.
 Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1]` the error measurements for the 1st band.
-We can plot the data pertaining to the first band as an example:
+We can plot the data pertaining to the 3rd band as an example:
 
 ```
 using PyPlot # must be indepedently installed
-errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band")
+errorbar(tobs[3], yobs[3], yerr=σobs[3], fmt="o", label="3rd band")
 ```
 
 
 
 ## 🔵 How to fit a dataset with `gpcc`
+
+Having generated the simulated data, we will now fit them with the GPCC model. To that end we use the function `gpcc`. Options of `gpcc` can be queried in help mode.
+
+```
+using GPCC
+tobs, yobs, σobs = simulatedata() # output omitted
+```
 
 ## 🔵 How to decide between candidate delays using `performcv`
 
