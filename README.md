@@ -78,11 +78,11 @@ using GPCC
 tobs, yobs, σobs = simulatedata();
 
 # We choose the rbf kernel. Other choices are GPCC.OU / GPCC.rbf / GPCC.matern32.
-# We fit the model for the given delays 0, 2, 6. 
+# We fit the model for the given delays 0, 2. 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero.
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000)
+minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0], iterations = 1000)
 ```
 The call returns three outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
