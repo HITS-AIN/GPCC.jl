@@ -104,6 +104,7 @@ Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers t
 <p align="center">
   <img src=simulateddata_predictions.png>
 </p>
+
 ```
 colours = ["blue", "orange"] # define colours
 
@@ -113,6 +114,7 @@ for i in 1:2
 end
 
 ```
+
 
 
 
