@@ -35,7 +35,7 @@ julia> figure(); title("first band")
 julia> errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band") # plot data of 1st band
 ```
 """
-function simulatedata()
+function simulatedata(;σ = 0.75)
 
 
     rg = MersenneTwister(1)
