@@ -37,7 +37,7 @@ Having exited Julia, one can enter the created environment again by simply start
 
 ## ▶ How to simulate data
 
-Method `simulatedata` can be used to simulate data in 3 arbitrary (non-physical) bands:
+Method `simulatedata` can be used to simulate data in 2 arbitrary (non-physical) bands:
 ```
 using GPCC
 tobs, yobs, σobs = simulatedata() # output omitted
@@ -52,14 +52,14 @@ First of all, we note that all three returned outputs are vectors containing vec
 typeof(tobs), typeof(yobs), typeof(σobs) 
 size(tobs), size(yobs), size(σobs)
 ```
-Each output contains data for 3 bands.
-`tobs` contains the observed times. `tobs[1]` contains the observed times for the 1st band, `tobs[2]` for the 2nd band and so on.
+Each output contains data for 2 bands.
+`tobs` contains the observed times. `tobs[1]` contains the observed times for the 1st band, `tobs[2]` for the 2nd band.
 Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1]` the error measurements for the 1st band and so on.
-We can plot the data pertaining to the 3rd band as an example:
+We can plot the data pertaining to the 2nd band as an example:
 
 ```
 using PyPlot # must be indepedently installed
-errorbar(tobs[3], yobs[3], yerr=σobs[3], fmt="o", label="3rd band")
+errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 ```
 
 
