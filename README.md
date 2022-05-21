@@ -43,6 +43,10 @@ using GPCC
 tobs, yobs, σobs = simulatedata() # output omitted
 ```
 
+<p align="center">
+  <img src=simulateddata.png>
+</p>
+
 A figure should show up displaying simulated light curves.
 More options can be found at help mode, `?simulatedata`.
 
