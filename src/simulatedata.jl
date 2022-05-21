@@ -1,8 +1,13 @@
 """
-    tobs, yobs, σobs = simulatedata()
+    tobs, yobs, σobs = simulatedata(; σ = 0.75)
 
 Returns toy data in 2 arbitrary bands that are useful for verification and illustrative purposes.
 Each of the returned outputs is an array of arrays.
+
+
+Arguments
+================
+- `σ` controls Gaussian noise added to simulated fluxes
 
 
 Returned outputs
@@ -38,8 +43,6 @@ function simulatedata()
     #---------------------------------------------------------------------
     # Define GP parameters
     #---------------------------------------------------------------------
-
-    σ = 0.75 # constant noise level for all data
 
     ρ = 3.5 # lengthscale
 
