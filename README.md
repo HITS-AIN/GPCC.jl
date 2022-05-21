@@ -94,7 +94,7 @@ The call returns three outputs:
 
 Having fitted the model to the data, we can now make predictions. We define the interval over which we want to predict and use `pred`:
 ```
-t_test = collect(-1:0.1:21);
+t_test = collect(0:0.1:20);
 μpred, σpred = pred(t_test);
 ```
 
