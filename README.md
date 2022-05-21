@@ -100,6 +100,10 @@ t_test = collect(-1:0.1:21);
 
 Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers to predictions for the $l$-th band, e.g. `μpred[2]` and `σpred[2]` hold respectively the mean prediction and standard deviation of the $2$-band. We plot the predictions for all bands:
 
+
+<p align="center">
+  <img src=simulateddata_predictions.png>
+</p>
 ```
 colours = ["blue", "orange"] # define colours
 
