@@ -1,7 +1,7 @@
 
 <h1 align="center">GPCC.jl</h1>
 <p align="center">
-  <img width="253" height="165" src=logo.png>
+  <img width="253" height="165" src=logo.svg>
 </p>
 
 
@@ -147,6 +147,25 @@ plot(candidatedelays, post, "o-"); xlabel("delays"); ylabel("prob") # PyPlot mus
 
 
 ## ▶ How to use `performcv` on multiple cores
+
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that one has to make sure that multiple workers are available:
+```
+using Distributed
+addprocs(2) # add two workers
+@everywhere using GPCC # make sure GPCC is made available to all workers
+
+cvresults2 = pmap(candidatedelays) do d
+  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d], iterations = 1000, numberoffolds = 5)
+end
+
+post2 = getprobabilities(cvresults2)
+
+
+# Check that the results are the same.
+# Note that results will not be exactly identical as the code does not guarantee
+# that the same random seeds are used both in parallel and single worker mode
+all(post .≈ post2)
+```
 
 ## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
 
