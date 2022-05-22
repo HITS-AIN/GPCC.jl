@@ -158,8 +158,13 @@ cvresults2 = pmap(candidatedelays) do d
   performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d], iterations = 1000, numberoffolds = 5)
 end
 
-# check that the results are the same. Note, that results will not be exactly identical, as different random seeds may be used due to the parallelisation
-all(cvresults .≈ cvresults2)
+post2 = getprobabilities(cvresults2)
+
+
+# Check that the results are the same.
+# Note that results will not be exactly identical as the code does not guarantee
+# that the same random seeds are used both in parallel and single worker mode
+all(post .≈ post2)
 ```
 
 ## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
