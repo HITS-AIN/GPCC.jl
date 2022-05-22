@@ -1,5 +1,5 @@
 """
-    tobs, yobs, σobs = simulatedata(; σ = 0.75)
+    tobs, yobs, σobs, truedelay = simulatedata(; σ = 0.75)
 
 Returns toy data in 2 arbitrary bands that are useful for verification and illustrative purposes.
 Each of the returned outputs is an array of arrays.
@@ -16,6 +16,7 @@ Returned outputs
 - `tobs`: Array of arrays of observation times.
 - `yobs`: Array of arrays of fluxes.
 - `σobs`: Array of error measurements.
+- `truedelays`: Delays characterising simulated light curves.
 
 An example of how the data are organised is given below.
 Note that function [`gpcc`](@ref) expects that the data passed to it
@@ -46,7 +47,7 @@ function simulatedata(;σ = 0.75)
 
     ρ = 3.5 # lengthscale
 
-    delays = [0.0; 2.0]
+    truedelays = [0.0; 2.0]
 
     α  = [1; 1.5] # scaling coefficients
 
@@ -57,10 +58,10 @@ function simulatedata(;σ = 0.75)
     # Report
     #---------------------------------------------------------------------
 
-    for i in 1:length(delays)
+    for i in 1:length(truedelays)
 
         @printf("\nBand %d\n", i)
-        @printf("\t delayed by %.2f\n", delays[i])
+        @printf("\t delayed by %.2f\n", truedelays[i])
         @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
         @printf("\t offset by b[%d]=%.2f\n",i, b[i])
     end
@@ -78,7 +79,7 @@ function simulatedata(;σ = 0.75)
     # Define Gaussian process to draw noisy targets
     #---------------------------------------------------------------------
 
-    C = delayedCovariance(matern32, α, delays, ρ, t)
+    C = delayedCovariance(matern32, α, truedelays, ρ, t)
 
     let
 
@@ -97,11 +98,11 @@ function simulatedata(;σ = 0.75)
 
     Y = rand(rg, MvNormal(zeros(sum(N)), C))
 
-    y = Vector{Vector{Float64}}(undef, length(delays))
+    y = Vector{Vector{Float64}}(undef, length(truedelays))
 
     mark = 0
 
-    for i in 1:length(delays)
+    for i in 1:length(truedelays)
 
         y[i] = Y[mark+1:mark+N[i]] * α[i] .+ b[i] .+ σ*randn(rg, N[i])
 
@@ -111,15 +112,15 @@ function simulatedata(;σ = 0.75)
 
     figure(0) ; cla()
 
-    for i in 1:length(delays)
+    for i in 1:length(truedelays)
 
-      plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", delays[i]))
+      plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
 
     end
 
     legend()
 
-    return t, y, [σ*ones(size(yᵢ)) for yᵢ in y]
+    return t, y, [σ*ones(size(yᵢ)) for yᵢ in y], truedelays
 
 
 end
