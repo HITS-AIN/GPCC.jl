@@ -127,7 +127,7 @@ end
 Suppose we did not know what the true delays characterising the simulated light curves were.
 In this case we would propose a few candidate delays, like 
 ```
-candidatedelays = 1.0:0.1:3.0
+candidatedelays = 0.0:0.1:5.0
 ```
 and subject them to $5$-fold cross-validation as follows:
 ```
