@@ -123,6 +123,19 @@ end
 
 ## ▶ How to decide between candidate delays using `performcv`
 
+Suppose we did not know what the true delays characterising the simulated light curves were.
+In this case we would propose a few candidate delays, like 
+```
+candidatedelays = [[0.0; 1.7], [0.0; 1.8], [0.0; 1.9], [0.0; 2.0], [0.0; 2.1], [0.0; 2.2], , [0.0; 2.3]]
+```
+and subject them to $5$-fold cross-validation as follows:
+```
+cvresults = map(candidatedelays) do D
+  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = D, iterations = 1000, numfolds = 5)
+end
+```
+
+
 ## ▶ How to use `performcv` on multiple cores
 
 ## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
