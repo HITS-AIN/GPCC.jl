@@ -126,13 +126,19 @@ end
 Suppose we did not know what the true delays characterising the simulated light curves were.
 In this case we would propose a few candidate delays, like 
 ```
-candidatedelays = [[0.0; 1.7], [0.0; 1.8], [0.0; 1.9], [0.0; 2.0], [0.0; 2.1], [0.0; 2.2], [0.0; 2.3]]
+candidatedelays = 1.0:0.1:3.0
 ```
 and subject them to $5$-fold cross-validation as follows:
 ```
-cvresults = map(candidatedelays) do D
-  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = D, iterations = 1000, numberoffolds = 5)
+cvresults = map(candidatedelays) do d
+  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d], iterations = 1000, numberoffolds = 5)
 end
+```
+
+We obtain approximate posterior probabilities with:
+```
+post = getprobabilities(cvresults)
+plot(candidatedelays, post, "o-") # PyPlot must be imported
 ```
 
 
