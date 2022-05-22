@@ -1,5 +1,5 @@
 """
-out = performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
+out = performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
 
 Performs cross-validation for Gaussian Process Cross Correlation (GPCC) model.
 
@@ -12,9 +12,9 @@ See also [`getprobabilities`](@ref).
 Input arguments
 ===============
 
-- `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
-- `yarray`: Array of arrays of fluxes. Same structure as `tarray`
-- `stdarray`: Array of error measurements. Same structure as `tarray`
+- `tobs`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
+- `yobs`: Array of arrays of fluxes. Same structure as `tobs`
+- `σobs`: Array of error measurements. Same structure as `tobs`
 - `kernel`: Specifies GP kernel function. Options are GPCC.OU / GPCC.rbf / GPCC.matern32
 - `delays`: L-dimensional vector of delays.
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
@@ -33,26 +33,25 @@ out: vector of test log-likelihoods for each fold
 ```julia-repl
 
 julia> tobs, yobs, σobs = simulatedata(); # simulate data with default delays [0;2;6]
-julia> out1 = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = [0;2;6], kernel = GPCC.matern32); # perform CV with true delays
-julia> out2 = performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = [0;2.1;5.9], kernel = GPCC.matern32); # julia> # perform CV with perturbed delays
+julia> out1 = performcv(tobs, yobs, σobs, iterations=1000, numberofrestarts=3, delays = [0;2;6], kernel = GPCC.matern32); # perform CV with true delays
+julia> out2 = performcv(tobs, yobs, σobs, iterations=1000, numberofrestarts=3, delays = [0;2.1;5.9], kernel = GPCC.matern32); # julia> # perform CV with perturbed delays
 julia> getprobabilities([out1, out2]) # estimate posterior probabilities, first entry corresponding to true delays should be higher
 ```
 """
-function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
-
-
+function performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
+    
     # let user know what is run
     str = @sprintf("\nRunning CV with %d number of folds\n\n", numberoffolds)
     colourprint(str, foreground = :cyan, bold = true)
 
 
 
-    numberofbands = length(yarray)
+    numberofbands = length(yobs)
 
-    @assert(length(tarray) == length(yarray) == length(stdarray))
+    @assert(length(tobs) == length(yobs) == length(σobs))
 
     for i in 1:numberofbands
-        @assert(length(tarray[i]) == length(yarray[i]) == length(stdarray[i]))
+        @assert(length(tobs[i]) == length(yobs[i]) == length(σobs[i]))
     end
 
 
@@ -63,11 +62,11 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
 
     for bandindex in 1:numberofbands
         rgkfold       = MersenneTwister(seedcv + bandindex)
-        KF            = Kfold(length(tarray[bandindex]), numberoffolds)
+        KF            = Kfold(length(tobs[bandindex]), numberoffolds)
         # problem with Kfold is that one cannot control the randomness of the partitioning
         # Hence the following workaround to what we would have normally used:
-        # collect(Kfold(length(tarray[bandindex]), numberoffolds))
-        KF.permseq   .= randperm(rgkfold, length(tarray[bandindex]))
+        # collect(Kfold(length(tobs[bandindex]), numberoffolds))
+        KF.permseq   .= randperm(rgkfold, length(tobs[bandindex]))
         bandfold[bandindex] = collect(KF)
     end
 
@@ -83,22 +82,22 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
         trainidx = [bandfold[bandindex][foldindex] for bandindex in 1:numberofbands]
 
         # Specify testing indices
-        testidx = [sort(setdiff(1:length(tarray[bandindex]), trainidx[bandindex])) for bandindex in 1:numberofbands]
+        testidx = [sort(setdiff(1:length(tobs[bandindex]), trainidx[bandindex])) for bandindex in 1:numberofbands]
 
         # Sanity check: check splitting
         for i in 1:numberofbands
-            @assert(all(length(trainidx[i]) + length(testidx[i]) == length(tarray[i])))
-            @assert(Set(union(trainidx[i], testidx[i])) == Set(1:length(tarray[i])))
+            @assert(all(length(trainidx[i]) + length(testidx[i]) == length(tobs[i])))
+            @assert(Set(union(trainidx[i], testidx[i])) == Set(1:length(tobs[i])))
         end
 
         # split data into training and testing
-        ttrain = [tarray[i][trainidx[i]]   for i in 1:numberofbands]
-        ytrain = [yarray[i][trainidx[i]]   for i in 1:numberofbands]
-        strain = [stdarray[i][trainidx[i]] for i in 1:numberofbands]
+        ttrain = [tobs[i][trainidx[i]] for i in 1:numberofbands]
+        ytrain = [yobs[i][trainidx[i]] for i in 1:numberofbands]
+        strain = [σobs[i][trainidx[i]] for i in 1:numberofbands]
 
-        ttest  = [tarray[i][testidx[i]]    for i in 1:numberofbands]
-        ytest  = [yarray[i][testidx[i]]    for i in 1:numberofbands]
-        stest  = [stdarray[i][testidx[i]]  for i in 1:numberofbands]
+        ttest  = [tobs[i][testidx[i]]  for i in 1:numberofbands]
+        ytest  = [yobs[i][testidx[i]]  for i in 1:numberofbands]
+        stest  = [σobs[i][testidx[i]]  for i in 1:numberofbands]
 
         str = @sprintf("\n--- fold %d train size is %d, test size is %d ---\n", foldindex, sum(length.(ttrain)), sum(length.(ttest)))
         colourprint(str, foreground = :light_blue, bold = true)
@@ -116,7 +115,7 @@ function performcv( ; tarray = tarray, yarray = yarray, stdarray = stdarray, del
 
             clr = ["r","g","b","m"]
 
-            xtest = collect(minimum(map(minimum, tarray)):0.5:maximum(map(maximum, tarray)))
+            xtest = collect(minimum(map(minimum, tobs)):0.5:maximum(map(maximum, tobs)))
 
             local meanpred, Sigmapred = predict(xtest)
 
