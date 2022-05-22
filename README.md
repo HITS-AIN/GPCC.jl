@@ -49,7 +49,7 @@ tobs, yobs, σobs, truedelays = simulatedata() # output omitted
 
 A figure, like the one above, should show up displaying simulated light curves.
 
-It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in exact same way.
+It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in the exact same way.
 First of all, we note that all three returned outputs are vectors containing vector elements (i.e. arrays of arrays) and  that they share the same size:
 ```
 typeof(tobs), typeof(yobs), typeof(σobs) 
