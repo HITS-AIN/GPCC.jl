@@ -40,7 +40,7 @@ Having exited Julia, one can enter the created environment again by simply start
 Method `simulatedata` can be used to simulate data in 2 arbitrary (non-physical) bands:
 ```
 using GPCC
-tobs, yobs, σobs = simulatedata() # output omitted
+tobs, yobs, σobs, truedelays = simulatedata() # output omitted
 ```
 
 <p align="center">
@@ -49,8 +49,8 @@ tobs, yobs, σobs = simulatedata() # output omitted
 
 A figure, like the one above, should show up displaying simulated light curves.
 
-It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in exact same way.
-First of all, we note that all three returned outputs are vectors containing vector elements (i.e. arrays of arrays) and  that they share the same size:
+It is important to note how the simulated data are organised because function `gpcc` expects the data passed to it to be organised in the exact same way.
+First of all, we note that all three returned outputs are vectors whose elements are vectors (i.e. arrays of arrays) and  that they share the same size:
 ```
 typeof(tobs), typeof(yobs), typeof(σobs) 
 size(tobs), size(yobs), size(σobs)
@@ -69,19 +69,19 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 ## ▶ How to fit a dataset with `gpcc`
 
-Having generated the simulated data, we will now fit them with the GPCC model. To that end we use the function `gpcc`. Options of `gpcc` can be queried in help mode.
+Having generated the simulated data, we will now fit them with the GPCC model. To that end we use the function `gpcc`. Options for `gpcc` can be queried in help mode.
 
 ```
 using GPCC
 
-tobs, yobs, σobs = simulatedata();
+tobs, yobs, σobs, truedelays = simulatedata();
 
 # We choose the rbf kernel. Other choices are GPCC.OU / GPCC.rbf / GPCC.matern32.
-# We fit the model for the given delays 0, 2. 
+# We fit the model for the given the true delays 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero.
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0], iterations = 1000)
+minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000)
 ```
 The call returns three outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
@@ -122,6 +122,29 @@ end
 
 
 ## ▶ How to decide between candidate delays using `performcv`
+
+Suppose we did not know what the true delays characterising the simulated light curves were.
+In this case we would propose a few candidate delays, like 
+```
+candidatedelays = 1.0:0.1:3.0
+```
+and subject them to $5$-fold cross-validation as follows:
+```
+cvresults = map(candidatedelays) do d
+  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d], iterations = 1000, numberoffolds = 5)
+end
+```
+
+We obtain approximate posterior probabilities with:
+```
+post = getprobabilities(cvresults)
+plot(candidatedelays, post, "o-"); xlabel("delays"); ylabel("prob") # PyPlot must be imported
+```
+
+<p align="center">
+  <img src=delay_vs_prob.png>
+</p>
+
 
 ## ▶ How to use `performcv` on multiple cores
 
