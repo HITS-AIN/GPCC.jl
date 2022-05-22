@@ -126,7 +126,7 @@ end
 Suppose we did not know what the true delays characterising the simulated light curves were.
 In this case we would propose a few candidate delays, like 
 ```
-candidatedelays = [[0.0; 1.7], [0.0; 1.8], [0.0; 1.9], [0.0; 2.0], [0.0; 2.1], [0.0; 2.2], , [0.0; 2.3]]
+candidatedelays = [[0.0; 1.7], [0.0; 1.8], [0.0; 1.9], [0.0; 2.0], [0.0; 2.1], [0.0; 2.2], [0.0; 2.3]]
 ```
 and subject them to $5$-fold cross-validation as follows:
 ```
