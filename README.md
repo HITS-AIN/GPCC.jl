@@ -131,7 +131,7 @@ candidatedelays = [[0.0; 1.7], [0.0; 1.8], [0.0; 1.9], [0.0; 2.0], [0.0; 2.1], [
 and subject them to $5$-fold cross-validation as follows:
 ```
 cvresults = map(candidatedelays) do D
-  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = D, iterations = 1000, numfolds = 5)
+  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = D, iterations = 1000, numberoffolds = 5)
 end
 ```
 
