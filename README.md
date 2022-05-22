@@ -138,7 +138,7 @@ end
 We obtain approximate posterior probabilities with:
 ```
 post = getprobabilities(cvresults)
-plot(candidatedelays, post, "o-") # PyPlot must be imported
+plot(candidatedelays, post, "o-"); xlabel("delays"); ylabel("prob") # PyPlot must be imported
 ```
 
 <p align="center">
