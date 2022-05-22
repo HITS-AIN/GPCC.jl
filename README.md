@@ -141,6 +141,10 @@ post = getprobabilities(cvresults)
 plot(candidatedelays, post, "o-") # PyPlot must be imported
 ```
 
+<p align="center">
+  <img src=delay_vs_prob.png>
+</p>
+
 
 ## ▶ How to use `performcv` on multiple cores
 
