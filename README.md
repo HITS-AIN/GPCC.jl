@@ -162,7 +162,7 @@ end
 post2 = getprobabilities(cvresults2)
 
 
-# Check that the results are the same.
+# Check that the results are approximately the same.
 # Note that results will not be exactly identical as the code does not guarantee
 # that the same random seeds are used both in parallel and single worker mode
 all(post .≈ post2)
