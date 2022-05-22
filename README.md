@@ -62,6 +62,7 @@ We can plot the data pertaining to the 2nd band as an example:
 
 ```
 using PyPlot # must be indepedently installed
+figure()
 errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 ```
 
