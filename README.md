@@ -159,10 +159,10 @@ plot(candidatedelays, post, "o-"); xlabel("delays"); ylabel("prob") # PyPlot mus
 
 ## ▶ How to use `performcv` on multiple cores
 
-One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that one has to make sure that multiple workers are available:
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
 ```
 using Distributed
-addprocs(2) # add two workers
+addprocs(2) # add two workers. Alternatively start Julia with specified number of workers with e.g. julia -p 2
 @everywhere using GPCC # make sure GPCC is made available to all workers
 
 cvresults2 = pmap(candidatedelays) do d
