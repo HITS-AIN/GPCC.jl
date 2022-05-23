@@ -89,6 +89,7 @@ The call returns three outputs:
 - a function `pred` for making predictions.
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 
+We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
 ## ▶ How to make predictions
 
@@ -119,6 +120,15 @@ end
 
 
 ## ▶ How to calculate log-likelihood on test data
+
+Suppose we want to calculate the log-likelihood on some new data (test data perhaps):
+```
+ttest = [[9.0; 10.0; 11.0], [9.0; 10.0; 11.0]]
+ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
+σtest = [[0.34, 0.42, 0.2], [0.87, 0.8, 0.66]]
+
+pred(ttest, ytest, σtest)
+```
 
 
 
