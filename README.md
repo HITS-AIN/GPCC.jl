@@ -82,12 +82,14 @@ tobs, yobs, σobs, truedelays = simulatedata();
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero.
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, posterioroffsetb = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000)
+minopt, pred, posterioroffsetb, scalingcoeff, lengthscale = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000)
 ```
-The call returns three outputs:
+The call returns five outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
 - a function `pred` for making predictions.
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
+- scaling coefficients
+- lengthscale of latent Gaussian process
 
 We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
