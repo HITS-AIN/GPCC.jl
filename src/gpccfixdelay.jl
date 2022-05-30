@@ -1,5 +1,5 @@
 """
-    minopt, pred, posterioroffsetvector = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, rhomin = 0.1, rhomax = 20.0)
+    minopt, pred, posterioroffsetvector, scalingcoeff, lengthscale = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 50, rhomin = 0.1, rhomax = 20.0)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -29,11 +29,13 @@ Returned arguments
 - `minopt`: negative log-likelihood reached when optimising GP hyperparameters.
 - `predict`: function for predicting on out-of-sample data.
 - `posterioroffsetvector`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
+- `scalingcoeff`: coefficients by which the latent Gaussian process is scaled in each band
+- `lengthscale`: length scale of latent Gaussian Process
 
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs = simulatedata(); # produce synthetic data
-julia> minopt, pred, posterioroffsetvector = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
+julia> minopt, pred, posterioroffsetvector, scalingcoeff, lengthscale = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
