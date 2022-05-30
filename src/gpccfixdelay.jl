@@ -299,6 +299,8 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # • function value returned from optimisation
     # • prediction function
     # • posterior of shift parameter
+    # • scale parameters α
+    # • lengthscale ρ
 
-    result.minimum, predictTest, posterioroffsetvector
+    result.minimum, predictTest, posterioroffsetvector, α, ρ
 end
