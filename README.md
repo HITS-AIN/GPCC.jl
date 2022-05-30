@@ -1,7 +1,7 @@
 
 <h1 align="center">GPCC.jl</h1>
 <p align="center">
-  <img width="253" height="165" src=logo.svg>
+  <img width="253" height="165" src=logo.png>
 </p>
 
 
@@ -12,7 +12,7 @@
 
 Apart from cloning, an easy way of using the package is the following:
 
-1 - Add the registry [CollaborativeAstronomyJulia](https://github.com/ngiann/CollaborativeAstronomyJulia).
+1 - Add the registry [CollaborativeAstronomyJulia](https://github.com/ngiann/CollaborativeAstronomyJulia). (❗ change this to [AINJuliaRegistry](https://github.com/HITS-AIN/AINJuliaRegistry) once public)
 
 2 - Switch into "package mode" with ```]``` and add the package with
 ```
@@ -62,6 +62,7 @@ We can plot the data pertaining to the 2nd band as an example:
 
 ```
 using PyPlot # must be indepedently installed
+figure()
 errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 ```
 
@@ -88,6 +89,7 @@ The call returns three outputs:
 - a function `pred` for making predictions.
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 
+We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
 ## ▶ How to make predictions
 
@@ -119,6 +121,15 @@ end
 
 ## ▶ How to calculate log-likelihood on test data
 
+Suppose we want to calculate the log-likelihood on some new data (test data perhaps):
+```
+ttest = [[9.0; 10.0; 11.0], [9.0; 10.0; 11.0]]
+ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
+σtest = [[0.34, 0.42, 0.2], [0.87, 0.8, 0.66]]
+
+pred(ttest, ytest, σtest)
+```
+
 
 
 ## ▶ How to decide between candidate delays using `performcv`
@@ -126,7 +137,7 @@ end
 Suppose we did not know what the true delays characterising the simulated light curves were.
 In this case we would propose a few candidate delays, like 
 ```
-candidatedelays = 1.0:0.1:3.0
+candidatedelays = 0.0:0.1:5.0
 ```
 and subject them to $5$-fold cross-validation as follows:
 ```
@@ -148,10 +159,10 @@ plot(candidatedelays, post, "o-"); xlabel("delays"); ylabel("prob") # PyPlot mus
 
 ## ▶ How to use `performcv` on multiple cores
 
-One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that one has to make sure that multiple workers are available:
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
 ```
 using Distributed
-addprocs(2) # add two workers
+addprocs(2) # add two workers. Alternatively start Julia with mulitple workers e.g. julia -p 2
 @everywhere using GPCC # make sure GPCC is made available to all workers
 
 cvresults2 = pmap(candidatedelays) do d
@@ -161,97 +172,8 @@ end
 post2 = getprobabilities(cvresults2)
 
 
-# Check that the results are the same.
+# Check that the results are approximately the same.
 # Note that results will not be exactly identical as the code does not guarantee
 # that the same random seeds are used both in parallel and single worker mode
 all(post .≈ post2)
-```
-
-## 🔵 Experimental results (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
-
-See [here](https://github.com/ngiann/GPCCExperiments) for experimental results.
-
-
-## 🔵 Example using a real dataset (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
-
-We use the package [GPCCData](https://github.com/ngiann/GPCCData.jl) to access real observations.
-
-
-```
-using GPCC, GPCCData
-
-# Following packages need to be independently installed. 
-# ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
-using ProgressMeter, Suppressor 
-
-
-# load data
-tobs, yobs, σobs, _ = readdataset(source="Mrk6")
-
-# Let's look at how data are organised. All of the three arrays have the same structure. They are all arrays of arrays.
-display(type(tobs)), display(type(yobs)), display(type(σobs))
-
-# Each array contains 2 inner arrays, one for each observed band (The number of bands is referred to as L in the paper).
-length.(tobs)
-length.(yobs)
-length.(σobs)
-
-# We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
-delays = [[0;d] for d in 0:0.2:100]
-
-# Check number of candidate delay vectors
-length(delays)
-
-# We want to run cross-validation for all candidate delay vectors.
-
-# Do "warmup" first for Julia
-@showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2])
-
-# Do proper run 
-out = @showprogress map(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays)
-
-# estimate posterior probability
-getprobabilities(out)
-```
-
-## 🔵 Example using a real dataset on multiple cores (THIS WILL BE MOVED TO THE PAPER RELATED PACKAGE)
-
-The above example can be easily be parallelised, i.e. we can try out the candidate delays in parallel.
-We need to start julia with multiple processes e.g. "julia -p 16" starts Julia with 16 workers.
-Alternatively, we can create more workers within Julia with:
-```
-using Distributed
-addprocs(16) # put here number of available cores
-```
-
-We repeat the script from above with minor changes marker with ⚠.
-We discard the lines of code inspecting the size and type of the variables.
-
-```
-using GPCCData
-
-@everywhere using GPCC  # ⚠ @everywhere makes packages available to all workers ⚠
-
-# Following packages need to be independently installed. 
-# ProgressMeter provides a progress bar while the user waits and Suppressor surpresses output to the terminal
-
-@everywhere using ProgressMeter, Suppressor # ⚠ again we use @everywhere ⚠
-
-
-# load data
-tobs, yobs, σobs, _ = readdataset(source="Mrk6")
-
-# We define an array of candidate delay vectors. Without loss of generalisation, the delay that corresponds to the first light curve is fixed to 0.
-delays = [[0;d] for d in 0:0.2:100]
-
-# We want to run cross-validation for all candidate delay vectors in parallel!
-
-# Do "warmup" first for Julia
-@showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=1000, numberofrestarts=3, delays = D, kernel = GPCC.matern32)), delays[1:2*nworkers()]) # ⚠ use pmap instead map ⚠
-
-# Do proper run 
-out = @showprogress pmap(D -> (@suppress performcv(tarray=tobs, yarray=yobs, stdarray=σobs, iterations=2000, numberofrestarts=1, delays = D, kernel = GPCC.matern32)), delays) # ⚠ use pmap instead map ⚠
-
-# estimate posterior probability
-getprobabilities(out)
 ```
