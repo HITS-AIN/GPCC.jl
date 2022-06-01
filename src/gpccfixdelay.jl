@@ -14,7 +14,7 @@ Input arguments
 - `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
 - `yarray`: Array of arrays of fluxes. Same structure as `tarray`
 - `stdarray`: Array of error measurements. Same structure as `tarray`
-- `kernel`: Specifies GP kernel function. Options are GPCC.OU / GPCC.rbf / GPCC.matern32
+- `kernel`: Specifies GP kernel function. Options are GPCC.OU / GPCC.rbf / GPCC.matern32 / GPCC.matern52
 - `delays`: L-dimensional vector of delays.
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
 - `seed`: Random seed controls the random sampling of initial solution.

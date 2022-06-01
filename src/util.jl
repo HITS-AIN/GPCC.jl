@@ -40,6 +40,18 @@ end
 
 #---------------------------------------------------
 
+function matern52(xᵢ,xⱼ ; ρ=1.0)
+
+    ℓ = sqrt(ρ)
+
+    r = norm(xᵢ - xⱼ)
+
+    (1 + sqrt(5)*r/ρ +( 5*r^2)/(3*ρ^2)) * exp(- sqrt(5)*r/ρ)
+
+end
+
+#---------------------------------------------------
+
 function Qmatrix(Narray)
 
     L = length(Narray) # number of time series
