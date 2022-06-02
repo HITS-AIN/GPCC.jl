@@ -77,12 +77,12 @@ using GPCC
 
 tobs, yobs, σobs, truedelays = simulatedata();
 
-# We choose the rbf kernel. Other choices are GPCC.OU / GPCC.rbf / GPCC.matern32.
+# We choose the Matern32 kernel. Other choices are OU(), RBF(), Matern32(), Matern52().
 # We fit the model for the given the true delays 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero.
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, posterioroffsetb, scalingcoeff, lengthscale = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000)
+minopt, pred, posterioroffsetb, scalingcoeff, lengthscale = gpcc(tobs, yobs, σobs; kernel = Matern32(), delays = truedelays, iterations = 1000)
 ```
 The call returns five outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
@@ -144,7 +144,7 @@ candidatedelays = 0.0:0.1:5.0
 and subject them to $5$-fold cross-validation as follows:
 ```
 cvresults = map(candidatedelays) do d
-  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d], iterations = 1000, numberoffolds = 5)
+  performcv(tobs, yobs, σobs; kernel = Matern32(), delays = [0;d], iterations = 1000, numberoffolds = 5)
 end
 ```
 
@@ -169,7 +169,7 @@ addprocs(2) # add two workers. Alternatively start Julia with mulitple workers e
 @everywhere using GPCC # make sure GPCC is made available to all workers
 
 cvresults2 = pmap(candidatedelays) do d
-  performcv(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d], iterations = 1000, numberoffolds = 5)
+  performcv(tobs, yobs, σobs; kernel = Matern32(), delays = [0;d], iterations = 1000, numberoffolds = 5)
 end
 
 post2 = getprobabilities(cvresults2)
