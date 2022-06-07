@@ -1,7 +1,8 @@
-function informuser(; seed = seed, iterations = iterations, numberofrestarts = numberofrestarts, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
+function informuser(; seed = seed, iterations = iterations, initialrandom = initialrandom, numberofrestarts = numberofrestarts, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
 
     colourprint(@sprintf("Running with random seed %d\n", seed), foreground = :light_blue, bold = true)
     @printf("\t iterations             = %d\n", iterations)
+    @printf("\t initialrandom          = %d\n", initialrandom)
     @printf("\t numberofrestarts       = %d\n", numberofrestarts)
     @printf("\t JITTER                 = %e\n", JITTER)
     @printf("\t ρmin                   = %f\n", ρmin)

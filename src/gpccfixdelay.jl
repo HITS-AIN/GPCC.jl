@@ -104,7 +104,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     #---------------------------------------------------------------------
 
     informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
+                initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
 
 
     #---------------------------------------------------------------------
