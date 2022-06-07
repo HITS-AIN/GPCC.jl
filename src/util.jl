@@ -47,7 +47,7 @@ function matern52(xᵢ,xⱼ ; ρ=1.0)
 
     r = norm(xᵢ - xⱼ)
 
-    (1 + sqrt(5)*r/ρ +( 5*r^2)/(3*ρ^2)) * exp(- sqrt(5)*r/ρ)
+    (1 + sqrt(5)*r/ρ +( 5*r^2)/(3*ℓ^2)) * exp(- sqrt(5)*r/ℓ)
 
 end
 
