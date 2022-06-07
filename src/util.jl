@@ -88,3 +88,9 @@ function Qvector(Narray, entries)
     Q
 
 end
+
+#---------------------------------------------------
+
+function internalversion()
+    @printf("newaltbranch 1")
+end
