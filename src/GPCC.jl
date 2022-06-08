@@ -19,14 +19,15 @@ module GPCC
 
     # include("gpccfixdelay_verifications.jl")
 
-    include("gpccfixdelay.jl"); include("gpccfixdelay2.jl")
+    ########################include("gpccfixdelay.jl");
+    include("gpccfixdelay2.jl")
 
     include("performcv.jl")
 
     include("getprobabilities.jl")
 
 
-    export simulatedata, gpcc,gpcc2, performcv, getprobabilities
+    export simulatedata, gpcc, performcv, getprobabilities
 
 
 end
