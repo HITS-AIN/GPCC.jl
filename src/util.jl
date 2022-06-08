@@ -92,5 +92,5 @@ end
 #---------------------------------------------------
 
 function internalversion()
-    @printf("newaltbranch 1")
+    @printf("newaltbranch 1 - new init mechanism")
 end
