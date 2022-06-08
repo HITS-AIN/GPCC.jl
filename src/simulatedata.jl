@@ -45,7 +45,7 @@ function simulatedata(;σ = 0.75)
     # Define GP parameters
     #---------------------------------------------------------------------
 
-    ρ = 3.5 # lengthscale
+    ρ = 3.5^2 # lengthscale
 
     truedelays = [0.0; 2.0]
 
