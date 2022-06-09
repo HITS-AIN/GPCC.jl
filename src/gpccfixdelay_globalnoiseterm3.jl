@@ -1,5 +1,5 @@
 """
-    minopt, pred, posterioroffsetvector, scalingcoeff, lengthscale = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+    minopt, pred, b, α, lengthscale = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -28,14 +28,14 @@ Returned arguments
 ==================
 - `minopt`: negative log-likelihood reached when optimising GP hyperparameters.
 - `predict`: function for predicting on out-of-sample data.
-- `posterioroffsetvector`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
-- `scalingcoeff`: coefficients by which the latent Gaussian process is scaled in each band
-- `lengthscale`: length scale of latent Gaussian Process
+- `α`: coefficients by which the latent Gaussian process is scaled in each band
+- `b`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
+- `ρ`: length scale of latent Gaussian Process
 
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs = simulatedata(); # produce synthetic data
-julia> minopt, pred, posterioroffsetvector, scalingcoeff, lengthscale = gpcc(tobs, yobs, σobs; kernel = RBF(), delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
+julia> minopt, pred, α, b, ρ = gpcc(tobs, yobs, σobs; kernel = RBF(), delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
@@ -84,11 +84,11 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Auxiliary matrices
     #---------------------------------------------------------------------
 
-    Y = reduce(vcat, yarray)           # concatenated time series observations
+    Y = reduce(vcat, yarray)                   # concatenated fluxes
 
-    Q  = Qmatrix(Narray)               # matrix for replicating elements
+    Q = Qmatrix(Narray)                        # matrix for replicating elements
 
-    Sobs = Diagonal(reduce(vcat, stdarray).^2)
+    Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
     #---------------------------------------------------------------------
     # Let user know what is being run
@@ -137,22 +137,17 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     end
 
-
-    # joint optimisation
+    # convenient call
 
     objective(param) = objective(unpack(param)...)
-
 
     # Define negative objective
 
     negativeobjective(x) = - objective(x)
 
-    # Auxiliary objectives that catch exception and allow optimiser to continue
-
-    # safeobj = safewrapper(objective)
+    # Auxiliary objective catches exceptions
 
     safenegativeobj = safewrapper(negativeobjective)
-
 
 
     #---------------------------------------------------------------------
@@ -169,7 +164,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
         else
 
-            # initial ρ values defined on grid
+            # initial ρ values on grid
 
             LinRange(ρmin + 1e-3, ρmax - 1e-3, numberofrestarts)
 
@@ -184,16 +179,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
 
     #---------------------------------------------------------------------
-    # Returns random values for initial scaling vector α
+    # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    sampleα() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
-
-    #---------------------------------------------------------------------
-    # Returns random values for initial shift vector v
-    #---------------------------------------------------------------------
+    sampleα() = map(var, yarray)  .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
     sampleb() = map(mean, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+
 
     #---------------------------------------------------------------------
     # Returns random unconstrained solution
@@ -223,6 +215,10 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     end
 
 
+    #---------------------------------------------------------------------
+    # Restart optimisation multiple times as specified in `numberofrestarts`
+    #---------------------------------------------------------------------
+
     allresults = [getsolution(i) for i in 1:numberofrestarts]
 
     result     = allresults[argmin([res.minimum for res in allresults])]
@@ -233,7 +229,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
 
     #---------------------------------------------------------------------
-    # instantiate learned matrix and observed variance parameter
+    # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
     @show α, b, ρ = unpack(paramopt)
@@ -245,17 +241,14 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     makematrixsymmetric!(KSobsB)
 
 
-
-
     #---------------------------------------------------------------------
     # Functions for predicting on test data
     #---------------------------------------------------------------------
 
-
     function predictTest(ttest::Union{Array{Array{Float64, 1}, 1}, Array{T} where T<:AbstractRange{S} where S<:Real})
 
-        Q✴  = Qmatrix(length.(ttest))
-
+        # matrix for replicating elements
+        Q✴ = Qmatrix(length.(ttest))
 
         # dimensions: N × Ntest
         kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest)
