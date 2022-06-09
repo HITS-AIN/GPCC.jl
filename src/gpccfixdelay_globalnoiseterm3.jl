@@ -75,8 +75,6 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Check dimensions
     #---------------------------------------------------------------------
 
-    Narray = length.(tarray)
-
     @assert(L == length(τ) == length(yarray) == length(tarray) == length(stdarray))
 
 
@@ -86,9 +84,10 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     Y = reduce(vcat, yarray)                   # concatenated fluxes
 
-    Q = Qmatrix(Narray)                        # matrix for replicating elements
+    Q = Qmatrix(length.(tarray))               # matrix for replicating elements
 
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
+
 
     #---------------------------------------------------------------------
     # Let user know what is being run
@@ -102,9 +101,9 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    makeα(x)  = makepositive(x) + 1e-8
+    makeα(x) = makepositive(x) + 1e-8
 
-    makeρ(x)  = transformbetween(x, ρmin, ρmax)
+    makeρ(x) = transformbetween(x, ρmin, ρmax)
 
     function unpack(param)
 
