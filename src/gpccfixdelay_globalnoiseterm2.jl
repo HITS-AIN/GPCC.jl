@@ -108,17 +108,17 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
 
     function unpack(param)
 
-        @assert(length(param) == 2L + 2)
+        @assert(length(param) == 3L + 1)
 
-        local α = makeα.(param[  1:1L])
+        local α =   makeα.(param[0L+1:1L])
 
-        local b = (param[L+1:2L])
+        local b =         (param[1L+1:2L])
 
-        local ρ = makeρ(param[2L+1])
+        local σ² = makeσ².(param[2L+1:3L])
 
-        local σ² = makeσ²(param[2L+2])
+        local ρ =    makeρ(param[3L+1])
 
-        α, b, ρ, σ²
+        return α, b, σ², ρ
 
     end
 
@@ -127,11 +127,11 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, b, ρ, σ²)
+    function objective(α, b, σ², ρ)
 
         local K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
-        local KSobsB = K + σ²*I
+        local KSobsB = K + Diagonal(Q*σ²)
 
         makematrixsymmetric!(KSobsB)
 
@@ -186,35 +186,42 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
 
 
     #---------------------------------------------------------------------
-    # Returns random values for initial scalings α
+    # Returns random values for initial scaling vector α
     #---------------------------------------------------------------------
 
     sampleα() = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
     #---------------------------------------------------------------------
-    # Returns random values for initial noise term σ²
+    # Returns random values for initial shift vector v
     #---------------------------------------------------------------------
-
-    sampleσ²() = 3 * rand(rg)
 
     sampleb() = map(mean, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
     #---------------------------------------------------------------------
-    # Function below calls optimiser.
-    # Optimisation starts with randomly sampled values for the scalings α
-    # and a value on a grid for the lengthscale ρ.
-    # Optimisation initially fixed ρ and optimises only ρ.
-    # After that joint optimisation follows.
+    # Returns random values for initial noise term σ²
+    #---------------------------------------------------------------------
+
+    sampleσ²() = 3 * rand(rg, L)
+
+    #---------------------------------------------------------------------
+    # Returns random unconstrained solution
+    #---------------------------------------------------------------------
+
+    sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
+                                      sampleb();
+                                      invmakepositive.(sampleσ²());
+                                      invtransformbetween(initialρvalues[i], ρmin, ρmax)]
+
+
+    #---------------------------------------------------------------------
+    # Function below calls optimiser
     #---------------------------------------------------------------------
 
     function getsolution(i)
 
-
         local opt = Optim.Options(show_trace = false, iterations = iterations, show_every = 2, g_tol=1e-6)
 
-        # create vectors of initial solutions
-
-        local randomsolutions = [[invmakepositive.(sampleα()); sampleb(); invtransformbetween(initialρvalues[i], ρmin, ρmax); invmakepositive(sampleσ²())] for _ in 1:initialrandom]
+        local randomsolutions = [sampleunconstrainedsolution(i) for _ in 1:initialrandom]
 
         local bestindex = argmin(map(safenegativeobj, randomsolutions))
 
@@ -238,11 +245,11 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     # instantiate learned matrix and observed variance parameter
     #---------------------------------------------------------------------
 
-    @show α, b, ρ, σ² = unpack(paramopt)
+    @show α, b, σ², ρ = unpack(paramopt)
 
     K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
-    KSobsB = K + σ²*I
+    KSobsB = K + Diagonal(Q*σ²)
 
     makematrixsymmetric!(KSobsB)
 
@@ -342,5 +349,5 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     # • scale parameters α
     # • lengthscale ρ
 
-    result.minimum, predictTest,   α, b, ρ, σ²
+    result.minimum, predictTest, (α, b, σ², ρ)
 end
