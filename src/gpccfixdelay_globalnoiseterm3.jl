@@ -43,17 +43,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, _stdarray_ignore; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -77,7 +77,7 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
 
     Narray = length.(tarray)
 
-    @assert(L == length(τ) == length(yarray) == length(tarray))
+    @assert(L == length(τ) == length(yarray) == length(tarray) == length(stdarray))
 
 
     #---------------------------------------------------------------------
@@ -87,6 +87,8 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     Y = reduce(vcat, yarray)           # concatenated time series observations
 
     Q  = Qmatrix(Narray)               # matrix for replicating elements
+
+    Sobs = Diagonal(reduce(vcat, stdarray).^2)
 
     #---------------------------------------------------------------------
     # Let user know what is being run
@@ -104,21 +106,17 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
 
     makeρ(x)  = transformbetween(x, ρmin, ρmax)
 
-    makeσ²(x) = makepositive(x)
-
     function unpack(param)
 
-        @assert(length(param) == 3L + 1)
+        @assert(length(param) == 2L + 1)
 
         local α =   makeα.(param[0L+1:1L])
 
         local b =         (param[1L+1:2L])
 
-        local σ² = makeσ².(param[2L+1:3L])
+        local ρ =    makeρ(param[2L+1])
 
-        local ρ =    makeρ(param[3L+1])
-
-        return α, b, σ², ρ
+        return α, b, ρ
 
     end
 
@@ -127,11 +125,11 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, b, σ², ρ)
+    function objective(α, b, ρ)
 
         local K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
-        local KSobsB = K + Diagonal(Q*σ²)
+        local KSobsB = K + Sobs
 
         makematrixsymmetric!(KSobsB)
 
@@ -198,18 +196,11 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     sampleb() = map(mean, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
     #---------------------------------------------------------------------
-    # Returns random values for initial noise term σ²
-    #---------------------------------------------------------------------
-
-    sampleσ²() = 3 * rand(rg, L)
-
-    #---------------------------------------------------------------------
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
     sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
                                       sampleb();
-                                      invmakepositive.(sampleσ²());
                                       invtransformbetween(initialρvalues[i], ρmin, ρmax)]
 
 
@@ -245,11 +236,11 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     # instantiate learned matrix and observed variance parameter
     #---------------------------------------------------------------------
 
-    @show α, b, σ², ρ = unpack(paramopt)
+    @show α, b, ρ = unpack(paramopt)
 
     K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
-    KSobsB = K + Diagonal(Q*σ²)
+    KSobsB = K + Sobs
 
     makematrixsymmetric!(KSobsB)
 
@@ -347,5 +338,5 @@ function gpccfixdelay(tarray, yarray, _stdarray_ignore; kernel = kernel, τ = τ
     # • prediction function
     # • optimised free parameters
 
-    result.minimum, predictTest, (α, b, σ², ρ)
+    result.minimum, predictTest, (α, b, ρ)
 end
