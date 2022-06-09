@@ -92,5 +92,5 @@ end
 #---------------------------------------------------
 
 function internalversion()
-    @printf("globalnoiseterm")
+    @printf("globalnoiseterm - optimise α, b and ρ")
 end
