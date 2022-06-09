@@ -19,7 +19,7 @@ module GPCC
 
     # include("gpccfixdelay_verifications.jl")
 
-    include("gpccfixdelay.jl")
+    include("gpccfixdelay_globalnoiseterm2.jl")
 
     include("performcv.jl")
 

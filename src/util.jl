@@ -14,9 +14,9 @@ end
 
 function OU(xᵢ,xⱼ ; ρ=1.0)
 
-    ℓ = sqrt(ρ)
+    ℓ = ρ
 
-    r = norm(xᵢ - xⱼ)
+    r = abs(xᵢ - xⱼ)
 
     exp(-r/ℓ)
 
@@ -31,9 +31,9 @@ rbf(xᵢ,xⱼ ; ρ=1.0) = exp(-0.5*(xᵢ-xⱼ)^2/(2ρ))
 
 function matern32(xᵢ,xⱼ ; ρ=1.0)
 
-    ℓ = sqrt(ρ)
+    ℓ = ρ
 
-    r = norm(xᵢ - xⱼ)
+    r = abs(xᵢ - xⱼ)
 
     (1 + sqrt(3)*r/ℓ) * exp(- sqrt(3)*r/ℓ)
 
@@ -43,9 +43,9 @@ end
 
 function matern52(xᵢ,xⱼ ; ρ=1.0)
 
-    ℓ = sqrt(ρ)
+    ℓ = ρ
 
-    r = norm(xᵢ - xⱼ)
+    r = abs(xᵢ - xⱼ)
 
     (1 + sqrt(5)*r/ρ +( 5*r^2)/(3*ℓ^2)) * exp(- sqrt(5)*r/ℓ)
 
