@@ -92,5 +92,5 @@ end
 #---------------------------------------------------
 
 function internalversion()
-    @printf("newaltbranch 1 - new init mechanism, initrandom 5")
+    @printf("globalnoiseterm")
 end
