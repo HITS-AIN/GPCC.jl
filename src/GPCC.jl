@@ -8,8 +8,6 @@ module GPCC
 
     using MLBase, StatsFuns
 
-    # using ApproximateVI
-
 
     include("delayedCovariance.jl")
 
@@ -17,9 +15,8 @@ module GPCC
 
     include("util.jl")
 
-    # include("gpccfixdelay_verifications.jl")
 
-    include("gpccfixdelay_globalnoiseterm3.jl")
+    include("gpccfixdelay.jl")
 
     include("performcv.jl")
 
