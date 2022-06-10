@@ -82,7 +82,7 @@ tobs, yobs, σobs, truedelays = simulatedata();
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, (α, b, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000)
+minopt, pred, (α, b, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000, rhomax = 300)
 ```
 The call returns three outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
