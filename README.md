@@ -89,7 +89,7 @@ The call returns five outputs:
 - a function `pred` for making predictions.
 - the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 - scaling coefficients $\alpha$
-- sgift vector $b$
+- shift vector $b$
 - lengthscale $\rho$ of latent Gaussian process
 
 We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
