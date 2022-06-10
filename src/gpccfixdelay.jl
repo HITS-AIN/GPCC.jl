@@ -1,5 +1,5 @@
 """
-    minopt, pred, b, α, lengthscale = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+    minopt, pred, b, α, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -14,7 +14,7 @@ Input arguments
 - `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
 - `yarray`: Array of arrays of fluxes. Same structure as `tarray`
 - `stdarray`: Array of error measurements. Same structure as `tarray`
-- `kernel`: Specifies GP kernel function. Options are OU(), RBF(), Matern32(), Matern52()
+- `kernel`: Specifies GP kernel function. Options are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
 - `delays`: L-dimensional vector of delays.
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
 - `seed`: Random seed controls the random sampling of initial solution.
@@ -34,8 +34,8 @@ Returned arguments
 
 # Example
 ```julia-repl
-julia> tobs, yobs, σobs = simulatedata(); # produce synthetic data
-julia> minopt, pred, α, b, ρ = gpcc(tobs, yobs, σobs; kernel = RBF(), delays = [0.0;2.0;6.0], iterations = 1000);  # fit GPCC
+julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
+julia> minopt, pred, α, b, ρ = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
