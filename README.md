@@ -70,7 +70,7 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 ## ▶ How to fit a dataset with `gpcc`
 
-Having generated the simulated data, we will now fit them with the GPCC model. To that end we use the function `gpcc`. Options for `gpcc` can be queried in help mode.
+Having generated the simulated data, we will now model them with the GPCC model. To that end we use the function `gpcc`. Options for `gpcc` can be queried in help mode.
 
 ```
 using GPCC
