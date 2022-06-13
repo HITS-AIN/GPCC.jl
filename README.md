@@ -93,7 +93,7 @@ We show below that function `pred` can be used both for making predictions and c
 
 ## ▶ How to make predictions
 
-Having fitted the model to the data, we can now make predictions. We define the interval over which we want to predict and use `pred`:
+Having fitted the model to the data, we can now make predictions. We first define the interval over which we want to predict and use `pred`:
 ```
 t_test = collect(0:0.1:20);
 μpred, σpred = pred(t_test);
