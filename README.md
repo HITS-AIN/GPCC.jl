@@ -135,7 +135,7 @@ pred(ttest, ytest, σtest)
 ## ▶ How to decide between candidate delays using `performcv`
 
 Suppose we did not know what the true delays characterising the simulated light curves were.
-In this case we would propose a few candidate delays, like 
+In this case we would propose a few candidate delays, like e.g.
 ```
 candidatedelays = 0.0:0.1:5.0
 ```
