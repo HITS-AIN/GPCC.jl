@@ -87,7 +87,6 @@ minopt, pred, (α, b, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, dela
 The call returns three outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
 - a function `pred` for making predictions.
-- the posterior distribution of the offset vector `posterioroffsetb` as an object of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal).
 - a tuple that contains the scaling coefficients $\alpha$, shift vector $b$ and lengthscale $\rho$ of latent Gaussian process.
 
 We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
