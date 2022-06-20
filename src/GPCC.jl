@@ -22,8 +22,10 @@ module GPCC
 
     include("getprobabilities.jl")
 
+    include("uniformpriordelay.jl")
 
-    export simulatedata, gpcc, performcv, getprobabilities
+
+    export simulatedata, gpcc, performcv, getprobabilities, uniformpriordelay
 
 
 end
