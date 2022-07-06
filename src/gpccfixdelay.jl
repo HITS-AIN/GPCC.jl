@@ -89,6 +89,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
 
+    # Closed form solution for shift vector
+
+    b = (Q'Q)\Q'*Y
+
+    Qb = Q*b
+
     #---------------------------------------------------------------------
     # Let user know what is being run
     #---------------------------------------------------------------------
@@ -107,15 +113,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     function unpack(param)
 
-        @assert(length(param) == 2L + 1)
+        @assert(length(param) == L + 1)
 
-        local α =   makeα.(param[0L+1:1L])
+        local α = makeα.(param[1:1L])
 
-        local b =         (param[1L+1:2L])
+        local ρ = makeρ(param[L+1])
 
-        local ρ =    makeρ(param[2L+1])
-
-        return α, b, ρ
+        return α, ρ
 
     end
 
@@ -124,15 +128,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, b, ρ)
+    function objective(α, ρ)
 
-        local K = delayedCovariance(kernel, α, τ, ρ, tarray)
+        local K = delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs
 
-        local KSobsB = K + Sobs
+        makematrixsymmetric!(K)
 
-        makematrixsymmetric!(KSobsB)
-
-        return logpdf(MvNormal(Q*b, KSobsB), Y)
+        return logpdf(MvNormal(Qb, K), Y)
 
     end
 
@@ -183,15 +185,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     sampleα() = map(var, yarray)  .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
-    sampleb() = map(mean, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
-
 
     #---------------------------------------------------------------------
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
     sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
-                                      sampleb();
                                       invtransformbetween(initialρvalues[i], ρmin, ρmax)]
 
 
@@ -231,7 +230,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
-    @show α, b, ρ = unpack(paramopt)
+    @show α, ρ = unpack(paramopt)
 
     K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
