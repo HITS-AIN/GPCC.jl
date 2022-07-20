@@ -167,7 +167,7 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
 
             # initial ρ values on grid
 
-            LinRange(ρmin + 1e-3, ρmax - 1e-3, numberofrestarts)
+            collect(MiscUtil.logrange(ρmin + 1e-3, ρmax - 1e-3, numberofrestarts))
 
         end
 
