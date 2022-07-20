@@ -1,5 +1,5 @@
 """
-    minopt, pred, α, b, ρ = gpccb(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+    minopt, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -18,9 +18,9 @@ Input arguments
 - `delays`: L-dimensional vector of delays.
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
 - `seed`: Random seed controls the random sampling of initial solution.
-- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation.
+- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
 - `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
-- `rhomin`: minimum value for lengthscale ρ of GP.
+- `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
 - `rhomax`: maximum value for lengthscale ρ of GP.
 
 
@@ -29,13 +29,13 @@ Returned arguments
 - `minopt`: negative log-likelihood reached when optimising GP hyperparameters.
 - `predict`: function for predicting on out-of-sample data.
 - `α`: coefficients by which the latent Gaussian process is scaled in each band
-- `b`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
+- `postb`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
 - `ρ`: length scale of latent Gaussian Process
 
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
-julia> minopt, pred, α, b, ρ = gpccb(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
+julia> minopt, pred, α, postb, ρ = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
@@ -43,17 +43,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpccb(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
 
     # Same function as below, but easier name for user to call
 
-    gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
 
 
 end
 
 
-function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -89,18 +89,20 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
 
-    # Closed form solution for shift vector
+    μb = map(mean, yarray)             # prior mean
 
-    b = (Q'Q)\Q'*Y
+    Σb = 100 * diagm(map(var, yarray)) # inflated prior covariance
 
-    Qb = Q*b
+    B  = Q * Σb * Q'
+
+    b̄  = Q * μb
 
     #---------------------------------------------------------------------
     # Let user know what is being run
     #---------------------------------------------------------------------
 
     informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = ones(L,L))
+                initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
 
 
     #---------------------------------------------------------------------
@@ -130,11 +132,11 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
 
     function objective(α, ρ)
 
-        local K = delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs
+        local K = delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs + B
 
         makematrixsymmetric!(K)
 
-        return logpdf(MvNormal(Qb, K), Y)
+        return logpdf(MvNormal(b̄, K), Y)
 
     end
 
@@ -234,9 +236,20 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
 
     K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
-    KSobsB = K + Sobs
+    KSobsB = K + Sobs + B
 
     makematrixsymmetric!(KSobsB)
+
+
+     #---------------------------------------------------------------------
+    # posterior distribution for shifts b
+    #---------------------------------------------------------------------
+
+    Σpostb = (Σb\I + Q'*((Sobs + K)\Q)) \ I
+
+    μpostb = Σpostb * ((Q' / (Sobs + K))*Y + Σb\μb)
+
+    postb = MvNormal(μpostb, makematrixsymmetric(Σpostb))
 
 
     #---------------------------------------------------------------------
@@ -245,14 +258,18 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
 
     function predictTest(ttest::Union{Array{Array{Float64, 1}, 1}, Array{T} where T<:AbstractRange{S} where S<:Real})
 
-        # matrix for replicating elements
-        Q✴ = Qmatrix(length.(ttest))
+        
+        Q✴  = Qmatrix(length.(ttest))
+
+        B✴  = Q * Σb * Q✴'
+
+        B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest)
+        kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(kernel, α, τ, ρ, ttest)
+        cB = delayedCovariance(kernel, α, τ, ρ, ttest) + B✴✴
 
         # full predictive covariance
         Σpred = cB - kB✴' * (KSobsB \ kB✴)
@@ -263,7 +280,9 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
 
         # predictive mean
 
-        μpred = kB✴' * (KSobsB \ (Y - (Q*b))) + (Q✴ * b)
+        b̄✴ = Q✴ * μb
+
+        μpred = kB✴' * (KSobsB \ (Y - b̄)) + b̄✴
 
         return μpred, Σpred
 
@@ -329,5 +348,5 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     # • prediction function
     # • optimised free parameters
 
-    result.minimum, predictTest, (α, b, ρ)
+    result.minimum, predictTest, (α, postb, ρ)
 end

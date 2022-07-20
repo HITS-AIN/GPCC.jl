@@ -16,7 +16,9 @@ module GPCC
     include("util.jl")
 
 
-    include("gpccfixdelay.jl")
+    # include("gpccfixdelay.jl")
+
+    include("gpccfixdelay_marginaliseb.jl")
 
     include("performcv.jl")
 
