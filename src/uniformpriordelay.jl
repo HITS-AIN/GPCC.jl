@@ -79,9 +79,9 @@ function BLRRatioGivenLum(; z = 0.1, bhm = 1e8, lum = 1e46, eta = 0.1)
 end
     
 
-function BLRRatio(; z = 0.1, bhm = 1e8, eta = 0.1, edfrac = 10.0)
+function BLRRatio(; z = 0.1, bhm = 1e8, edfrac = 10.0, eta = 0.1)
         
-    #Rin, Rout = BLRRatio(z = 0.1, bhm = 1e8, eta = 0.1, edfrac = 10.0)
+    #Rin, Rout = BLRRatio(z = 0.1, bhm = 1e8, edfrac = 10.0, eta = 0.1)
 
     proton_mass = 1.6726231e-24 # in grams
     thscs = 0.665e-24 # cm2 # Thompson scattering cross-section per electron --> (Thompson opacity = thscs / proton_mass = 0.397579 cm2 gram-1)
