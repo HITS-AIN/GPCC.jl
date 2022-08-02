@@ -11,7 +11,7 @@ function uniformpriordelay(; z = z, bhm = bhm, eta = 0.1, edfrac = 10.0)
 
     lum = masslumfunction(;bhm = bhm, edfrac = edfrac, eta = eta)
 
-    f(L,z) = 10.0^(1.559)*(L * 10^(-44))^(0.549) * (1 + z)
+    f(L,z) = 10.0^(1.559)*(L/10 * 10^(-44))^(0.549) * (1 + z)
 
     Uniform(0.0, f(lum, z))
 
