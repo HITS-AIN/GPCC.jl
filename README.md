@@ -82,12 +82,12 @@ tobs, yobs, σobs, truedelays = simulatedata();
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, (α, b, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000, rhomax = 300)
+minopt, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000, rhomax = 300)
 ```
 The call returns three outputs:
 - the (local) optimum marginal likelihood `minopt` reached by the optimiser.
 - a function `pred` for making predictions.
-- a tuple that contains the scaling coefficients $\alpha$, shift vector $b$ and lengthscale $\rho$ of latent Gaussian process.
+- a tuple that contains the scaling coefficients $\alpha$, posterior distribution `postb` (of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal)) for shift $b$  and lengthscale $\rho$ of the latent Gaussian process.
 
 We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
