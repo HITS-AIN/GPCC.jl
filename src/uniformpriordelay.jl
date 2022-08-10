@@ -1,21 +1,35 @@
 """
 Uniform prior on delay τ.
 It calculates an upper limit on what the delay can be.
-This is a theoretical prior based on Eddingtion accretion efficiency.
+This is a theoretical prior based on considerations concerning photoionisation.
 """
-function uniformpriordelay(; z = z, bhm = bhm, eta = 0.1, edfrac = 10.0)
+function uniformpriordelay(; L = L, z = z)
     
-    @printf("Mass is %e\n", bhm)
-    @printf("efficiency eta is %f\n", eta)
-    @printf("eddington fraction is %f\n", edfrac)
-
-    lum = masslumfunction(;bhm = bhm, edfrac = edfrac, eta = eta)
-
     f(L,z) = 10.0^(1.559)*(L * 10^(-44))^(0.549) * (1 + z)
 
-    Uniform(0.0, f(lum, z))
+    Uniform(0.0, f(L, z))
 
 end
+
+
+# """
+# Uniform prior on delay τ.
+# It calculates an upper limit on what the delay can be.
+# This is a theoretical prior based on Eddingtion accretion efficiency.
+# """
+# function uniformpriordelay(; z = z, bhm = bhm, eta = 0.1, edfrac = 10.0)
+    
+#     @printf("Mass is %e\n", bhm)
+#     @printf("efficiency eta is %f\n", eta)
+#     @printf("eddington fraction is %f\n", edfrac)
+
+#     lum = masslumfunction(;bhm = bhm, edfrac = edfrac, eta = eta)
+
+#     f(L,z) = 10.0^(1.559)*(L * 10^(-44))^(0.549) * (1 + z)
+
+#     Uniform(0.0, f(lum, z))
+
+# end
 
 
 function masslumfunction(;bhm=1e8,edfrac=10.0,eta=0.1)
