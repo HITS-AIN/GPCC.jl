@@ -1,4 +1,59 @@
-function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, numberofrestarts = 1, ρmin = 0.1)
+"""
+    minopt, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofinitialsolutions = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+
+Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
+
+Data passed to the function are organised as arrays of arrays.
+The outer array contains L number of inner arrays where L is the number of bands.
+The l-th inner arrays hold the data pertaining to the l-th band.
+See [`simulatedata`](@ref) for an example of how data are organised.
+
+Input arguments
+===============
+
+- `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
+- `yarray`: Array of arrays of fluxes. Same structure as `tarray`
+- `stdarray`: Array of error measurements. Same structure as `tarray`
+- `kernel`: Specifies GP kernel function. Options are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
+- `delays`: L-dimensional vector of delays.
+- `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
+- `seed`: Random seed controls the random sampling of initial solution.
+- `numberofinitialsolutions`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
+- `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
+- `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
+- `rhomax`: maximum value for lengthscale ρ of GP.
+
+
+Returned arguments
+==================
+- `minopt`: negative log-likelihood reached when optimising GP hyperparameters.
+- `predict`: function for predicting on out-of-sample data.
+- `α`: coefficients by which the latent Gaussian process is scaled in each band
+- `postb`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
+- `ρ`: length scale of latent Gaussian Process
+
+# Example
+```julia-repl
+julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
+julia> minopt, pred, α, postb, ρ = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
+julia> trange = collect(-10:0.1:25); # define time interval for predictions
+julia> μpred, σpred = pred(trange) # obtain predictions
+julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
+julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
+julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
+```
+"""
+function gpccvi(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofinitialsolutions = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+
+    # Same function as below, but easier name for user to call
+
+    gpccfixdelayvi(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofinitialsolutions = numberofinitialsolutions, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
+
+
+end
+
+
+function gpccfixdelayvi(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofinitialsolutions = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -11,33 +66,30 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
     # Set constants
     #---------------------------------------------------------------------
 
-    JITTER = 1e-8   # JITTER to avoid numerical instability
-
-    Tmax = maximum(reduce(vcat, tarray))
+    JITTER = 1e-8
 
     L = length(tarray)
 
 
     #---------------------------------------------------------------------
-    # Sort out dimensions
+    # Check dimensions
     #---------------------------------------------------------------------
 
-    Narray = length.(tarray)
-
-    @assert(L == length(yarray) == length(tarray) == length(stdarray))
+    @assert(L == length(τ) == length(yarray) == length(tarray) == length(stdarray))
 
 
     #---------------------------------------------------------------------
     # Auxiliary matrices
     #---------------------------------------------------------------------
 
-    Y = reduce(vcat, yarray)          # concatenated time series observations
+    Y = reduce(vcat, yarray)                   # concatenated fluxes
 
-    Sobs = Diagonal(reduce(vcat, stdarray).^2)
+    Q = Qmatrix(length.(tarray))               # matrix for replicating elements
 
-    Q  = Qmatrix(Narray)              # matrix for replicating elements
+    Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
-    μb = map(mean, yarray)            # prior mean
+
+    μb = map(mean, yarray)             # prior mean
 
     Σb = 100 * diagm(map(var, yarray)) # inflated prior covariance
 
@@ -45,109 +97,176 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
 
     b̄  = Q * μb
 
-
     #---------------------------------------------------------------------
     # Let user know what is being run
     #---------------------------------------------------------------------
 
-    informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                JITTER = JITTER, ρmin = ρmin, Σb = Σb)
+    # informuser(seed = seed, iterations = iterations, numberofinitialsolutions = numberofinitialsolutions,
+    #             initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
 
 
     #---------------------------------------------------------------------
+    # Functions for constraining parameters
+    #---------------------------------------------------------------------
+
+    makeα(x) = makepositive(x) + 1e-8
+
+    makeρ(x) = transformbetween(x, ρmin, ρmax)
+
     function unpack(param)
-    #---------------------------------------------------------------------
 
-        @assert(length(param) == 2L)
+        @assert(length(param) == L + 1)
 
-        local scale  = makepositive.(param[1+0L:1*L]) .+ 1e-3
+        local α = makeα.(param[1:1L])
 
-        local delays = [0.0; makepositive.(param[1+1L:2*L-1])]
+        local ρ = makeρ(param[L+1])
 
-        local ρ     = makepositive(param[2L]) + 1e-3
-
-        return scale, delays, ρ
+        return α, ρ
 
     end
 
 
     #---------------------------------------------------------------------
-    function objective(param)
+    # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-        local scale, delays, ρ = unpack(param)
+    function objective(α, ρ)
 
-        local K = delayedCovariance(scale, delays, ρ, tarray)
+        local K = delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs + B
 
-        local KSobsB = K + Sobs + B
+        makematrixsymmetric!(K)
 
-        makematrixsymmetric!(KSobsB)
-
-        return logpdf(MvNormal(b̄, KSobsB), Y)
+        return logpdf(MvNormal(b̄, K), Y)
 
     end
+
+    # convenient call
+
+    objective(param) = objective(unpack(param)...)
+
+    # Define negative objective
 
     negativeobjective(x) = - objective(x)
 
+    # Auxiliary objective catches exceptions
+
     safenegativeobj = safewrapper(negativeobjective)
 
-    safeobj = safewrapper(objective)
+    # safeobj = safewrapper(objective)
+
 
     #---------------------------------------------------------------------
-    # Call optimiser and initialise with random search
+    # Define initial values for lengthscale ρ
     #---------------------------------------------------------------------
 
-    function getsolution()
+    initialρvalues = let
 
-        sampleρ()       = rand(rg, Uniform(ρmin, Tmax))
+        if numberofinitialsolutions == 1 || numberofinitialsolutions == 2
 
-        samplescales()  = map(var, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+            # pick initial ρ values randomly
 
-        sampledelays()  = cumsum(rand(rg, L-1) * Tmax)
+            rand(rg, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofinitialsolutions)
 
-        randomsolutions = [[invmakepositive.(samplescales());
-                            invmakepositive.(sampledelays());
-                            invmakepositive(sampleρ())] for i in 1:50]
+        else
 
-        bestindex = argmin(map(safenegativeobj, randomsolutions))
+            # initial ρ values on grid
 
-        opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 10, g_tol=1e-8)
+            collect(MiscUtil.logrange(ρmin + 1e-3, ρmax - 1e-3, numberofinitialsolutions))
 
-        optimize(safenegativeobj, randomsolutions[bestindex], NelderMead(), opt)
+        end
 
     end
 
-    allresults = [getsolution() for _ in 1:numberofrestarts]
 
-    result = allresults[argmin([res.minimum for res in allresults])]
+    @printf("\n\tInitial ρ values are:\n")
 
-    paramopt = result.minimizer
+    map(x -> @printf("\t%f\n", x), initialρvalues)
 
-    post, mll = VI(safeobj, paramopt, optimiser = Optim.LBFGS(), iterations = iterations, show_every=1, S=75)
-
-    return mll, post, unpack
 
     #---------------------------------------------------------------------
-    # instantiate learned matrix and observed variance parameter
+    # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    @show scale, delays, ρ = unpack(paramopt)
+    sampleα() = map(var, yarray)  .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
 
-    K = delayedCovariance(scale, delays, ρ, tarray)
 
-    KSobsB = K + Sobs + B
+    #---------------------------------------------------------------------
+    # Returns random unconstrained solution
+    #---------------------------------------------------------------------
 
-    makematrixsymmetric!(KSobsB)
+    sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
+                                      invtransformbetween(initialρvalues[i], ρmin, ρmax)]
+
+
+    #---------------------------------------------------------------------
+    # Evaluate initial solutions
+    #---------------------------------------------------------------------
+
+    function getinitialsolution()
+
+        local randomsolutions = [sampleunconstrainedsolution(i) for i in 1:numberofinitialsolutions]
+
+        local bestindex = argmin(map(safenegativeobj, randomsolutions))
+
+        return randomsolutions[bestindex]
+        
+    end
+
+
+    #---------------------------------------------------------------------
+    # 
+    #---------------------------------------------------------------------
+
+    
+    paramopt0   = getinitialsolution()
+
+    
+    #---------------------------------------------------------------------
+    # 
+    #---------------------------------------------------------------------
+
+    post, mll = ApproximateVI.VI(objective, paramopt0, optimiser = Optim.NelderMead(), iterations = iterations, show_every=50, S=75)
+
+    
+
+    #---------------------------------------------------------------------
+    # instantiate learned kernel matrix
+    #---------------------------------------------------------------------
+
+
+
+
+    #---------------------------------------------------------------------
+    # posterior distribution for shifts b
+    #---------------------------------------------------------------------
+
+    # Σpostb = (Σb\I + Q'*((Sobs + K)\Q)) \ I
+
+    # μpostb = Σpostb * ((Q' / (Sobs + K))*Y + Σb\μb)
+
+    # postb = MvNormal(μpostb, makematrixsymmetric(Σpostb))
 
 
     #---------------------------------------------------------------------
     # Functions for predicting on test data
     #---------------------------------------------------------------------
 
-    #---------------------------------------------------------------------------
     function predictTest(ttest::Union{Array{Array{Float64, 1}, 1}, Array{T} where T<:AbstractRange{S} where S<:Real})
-    #---------------------------------------------------------------------------
 
+
+        paramopt = rand(post)
+
+        α, ρ = unpack(paramopt)
+
+        K = delayedCovariance(kernel, α, τ, ρ, tarray)
+    
+        KSobsB = K + Sobs + B
+    
+        makematrixsymmetric!(KSobsB)
+
+
+
+        
         Q✴  = Qmatrix(length.(ttest))
 
         B✴  = Q * Σb * Q✴'
@@ -155,10 +274,10 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
         B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(scale, delays, ρ, tarray, ttest) + B✴
+        kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(scale, delays, ρ, ttest) + B✴✴
+        cB = delayedCovariance(kernel, α, τ, ρ, ttest) + B✴✴
 
         # full predictive covariance
         Σpred = cB - kB✴' * (KSobsB \ kB✴)
@@ -178,9 +297,8 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
     end
 
 
-    #---------------------------------------------------------------------------
+
     function predictTest(ttest::Union{AbstractRange{Float64}, Array{Float64,1}})
-    #---------------------------------------------------------------------------
 
         Ntest = length(ttest)
 
@@ -197,11 +315,10 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
     end
 
 
-    #---------------------------------------------------------------------------
+
     function predictTest(ttest::Array{Array{Float64, 1}, 1},
                          ytest::Array{Array{Float64, 1}, 1},
                          σtest::Array{Array{Float64, 1}, 1})
-    #---------------------------------------------------------------------------
 
         local μpred, Σpred = predictTest(ttest)
 
@@ -234,8 +351,10 @@ function gpcc2vi(tarray, yarray, stdarray; iterations = iterations, seed = 1, nu
     end
 
 
-    # return function value returned from optimisation and prediction function
+    # return:
+    # • function value returned from optimisation
+    # • prediction function
+    # • optimised free parameters
 
-    result.minimum, predictTest
-
+    mll, predictTest, post, unpack
 end

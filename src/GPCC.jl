@@ -6,7 +6,7 @@ module GPCC
 
     using Printf, MiscUtil, Suppressor
 
-    using MLBase, StatsFuns
+    using MLBase, StatsFuns, ApproximateVI
 
 
     include("delayedCovariance.jl")
@@ -16,7 +16,7 @@ module GPCC
     include("util.jl")
 
 
-    # include("gpccfixdelay.jl")
+    include("UNUSED/gpccvi.jl")
 
     include("gpccfixdelay_marginaliseb.jl")
 
@@ -27,7 +27,7 @@ module GPCC
     include("uniformpriordelay.jl")
 
 
-    export simulatedata, gpcc, performcv, getprobabilities, uniformpriordelay
+    export simulatedata, gpcc, performcv, getprobabilities, uniformpriordelay, gpccvi
 
 
 end
