@@ -1,9 +1,10 @@
 name = "GPCC"
 uuid = "4498ab02-56af-48f6-b5af-4c1c07c71523"
 authors = ["ngiann <ngiann@gmail.com> and contributors"]
-version = "0.1.29"
+version = "0.1.30"
 
 [deps]
+ApproximateVI = "e67a2193-b68a-469d-be77-24baf3975c82"
 BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
