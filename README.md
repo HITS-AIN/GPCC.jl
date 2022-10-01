@@ -19,7 +19,7 @@ Apart from cloning, an easy way of using the package is the following:
 add GPCC
 ```
 
-The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata`, `getprobabilities` and `performcv`.
+The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata` and `getprobabilities`.
 These functions can be queried in help mode in the Julia REPL. 
 
 In case you are installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
@@ -28,10 +28,10 @@ In case you are installing `GPCC.jl` in an existing Julia environment, there is 
 mkdir("myGPCC")
 cd("myGPCC")
 # press `]` to enter package mode:
-(@v1.6) pkg> activate .
+(@v1.7) pkg> activate .
 ```
 and use this environment for installing and working with the package.
-Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
+Having exited Julia, one can re-enter this environment by simply starting Julia in the respective folder ("myGPCC") and using `activate .` in package mode.
 
 
 
