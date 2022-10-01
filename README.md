@@ -130,9 +130,7 @@ ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
 pred(ttest, ytest, σtest)
 ```
 
-## ▶ Evaluating a set of candidate delays
-
-### Simulated data
+## ▶ Evaluating a set of candidate delays on simulated data
 
 Given the simulated data, suppose we would like to evaluate the posterior probability of a set of candidate delays.
 Noting that without loss of generality we can always set the delay of the 1st band equal to zero, we define the following grid of delays:
@@ -155,8 +153,27 @@ figure()
 plot(candidatedelays, getprobabilities(loglikel))
 ```
 
+## ▶ Evaluating a set of candidate delays in parallel
 
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
+```
+using Distributed
 
+addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
+
+@everywhere using GPCC # make sure GPCC is made available to all workers
+
+candidatedelays = collect(0.0:0.2:20)
+
+tobs, yobs, σobs, truedelays = simulatedata();
+
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+
+loglikel = pmap(helper, candidatedelays)
+
+figure()
+
+plot(candidatedelays, getprobabilities(loglikel))
 <!---
 
 ## ▶ How to decide between candidate delays using `performcv`
