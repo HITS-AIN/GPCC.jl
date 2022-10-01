@@ -138,6 +138,7 @@ Given the simulated data, suppose we would like to evaluate the posterior probab
 Noting that without loss of generality we can always set the delay of the 1st band equal to zero, we define the following grid of delays:
 ```
 candidatedelays = collect(0.0:0.2:20)
+```
 
 We use `map` to run `gpcc` on all candidate delays as follows:
 ```
@@ -157,6 +158,7 @@ plot(candidatedelays, getprobabilities(loglikel))
 
 
 <!---
+
 ## ▶ How to decide between candidate delays using `performcv`
 
 Suppose we did not know what the true delays characterising the simulated light curves were.
