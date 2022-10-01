@@ -174,6 +174,11 @@ loglikel = pmap(helper, candidatedelays)
 figure()
 
 plot(candidatedelays, getprobabilities(loglikel))
+```
+
+
+
+
 <!---
 
 ## ▶ How to decide between candidate delays using `performcv`
