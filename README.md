@@ -130,6 +130,31 @@ ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
 pred(ttest, ytest, σtest)
 ```
 
+## ▶ Evaluating a set of candidate delays
+
+### Simulated data
+
+Given the simulated data, suppose we would like to evaluate the posterior probability of a set of candidate delays.
+Noting that without loss of generality we can always set the delay of the 1st band equal to zero, we define the following grid of delays:
+```
+candidatedelays = collect(0.0:0.2:20)
+
+We use `map` to run `gpcc` on all candidate delays as follows:
+```
+using GPCC
+
+tobs, yobs, σobs, truedelays = simulatedata();
+
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+
+loglikel = map(helper, candidatedelays)
+
+figure()
+
+plot(candidatedelays, getprobabilities(loglikel))
+```
+
+
 
 <!---
 ## ▶ How to decide between candidate delays using `performcv`
