@@ -131,7 +131,7 @@ pred(ttest, ytest, σtest)
 ```
 
 
-
+<!---
 ## ▶ How to decide between candidate delays using `performcv`
 
 Suppose we did not know what the true delays characterising the simulated light curves were.
@@ -178,3 +178,4 @@ post2 = getprobabilities(cvresults2)
 # that the same random seeds are used both in parallel and single worker mode
 all(post .≈ post2)
 ```
+-->
