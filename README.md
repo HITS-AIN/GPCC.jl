@@ -163,13 +163,22 @@ addprocs(4) # add four workers. Alternatively start Julia with mulitple workers 
 
 @everywhere using GPCC # make sure GPCC is made available to all workers
 
+@everywhere using ProgressMeter, Suppressor # need to be independently installed
+
+using PyPlot # we need this to plot the posterior probabilities, must be independently installed
+
 candidatedelays = collect(0.0:0.2:20)
 
 tobs, yobs, σobs, truedelays = simulatedata();
 
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+# macro @showprogress below reports progress of pmap with a progress bar
+# macro @suppress below suppresses terminal messages produced by gpcc
 
-loglikel = pmap(helper, candidatedelays)
+loglikel = @showprogress pmap(candidatedelays) do delay
+
+  @suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+
+end
 
 figure()
 
