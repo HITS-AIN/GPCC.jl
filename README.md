@@ -89,7 +89,7 @@ The call returns three outputs:
 - a function `pred` for making predictions.
 - a tuple that contains the scaling coefficients $\alpha$, posterior distribution `postb` (of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal)) for shift $b$  and lengthscale $\rho$ of the latent Gaussian process.
 
-We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
+We show below how function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
 ## ▶ How to make predictions
 
