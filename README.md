@@ -31,7 +31,7 @@ cd("myGPCC")
 (@v1.7) pkg> activate .
 ```
 and use this environment for installing and working with the package.
-Having exited Julia, one can re-enter this environment by simply starting Julia in the respective folder ("myGPCC") and using `activate .` in package mode.
+When restarting Julia, one can re-enter this environment by simply starting Julia in the respective folder ("myGPCC") and using `activate .` in package mode.
 
 
 
