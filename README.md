@@ -167,7 +167,7 @@ addprocs(4) # add four workers. Alternatively start Julia with mulitple workers 
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed
 
-candidatedelays = collect(0.0:0.2:20)
+candidatedelays = collect(0.0:0.1:20)
 
 tobs, yobs, σobs, truedelays = simulatedata();
 
