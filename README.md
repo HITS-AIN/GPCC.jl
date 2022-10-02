@@ -22,7 +22,7 @@ add GPCC
 The package exposes three functions of interest to the user: `gpcc`, `simulatedata` and `getprobabilities`.
 These functions can be queried in help mode in the Julia REPL. 
 
-In case you are installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
+If installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
 
 ```
 mkdir("myGPCC")
