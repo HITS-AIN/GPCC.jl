@@ -19,8 +19,13 @@ Apart from cloning, an easy way of using the package is the following:
 add GPCC
 ```
 
-The package exposes three functions of interest to the user: `gpcc`, `simulatedata` and `getprobabilities`.
+The package exposes the following functions of interest to the user: 
+- `gpcc`
+- `simulatetwolightcurves` and `simulatethreelightcurves`,
+- `getprobabilities`
+- `uniformpriordelay`.
 These functions can be queried in help mode in the Julia REPL. 
+
 
 If installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
 
