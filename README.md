@@ -203,7 +203,7 @@ Instead of function `simulatetwolightcurves`, we use function `simulatethreeligh
 We evaluate the delays using a nested `map`:
 
 ```
-using GPCC # make sure GPCC is made available to all workers
+using GPCC
 
 using ProgressMeter, Suppressor # need to be independently installed
 
