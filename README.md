@@ -130,7 +130,7 @@ ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
 pred(ttest, ytest, σtest)
 ```
 
-## ▶ Evaluating a set of candidate delays on simulated data
+## ▶ Evaluating a set of candidate delays
 
 Given the simulated data, suppose we would like to evaluate the posterior probability of a set of candidate delays.
 Noting that without loss of generality we can always set the delay of the 1st band equal to zero, we define the following grid of delays:
@@ -183,6 +183,29 @@ end
 figure()
 
 plot(candidatedelays, getprobabilities(loglikel))
+```
+
+
+## ▶ Evaluating a set of candidate delays for 3 light curves
+
+We show an example for calculating the posterior for 3 light curves.
+We evaluate the delays using a nested `map` or `pmap`:
+
+```
+using Distributed
+
+addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
+
+@everywhere using GPCC # make sure GPCC is made available to all workers
+
+@everywhere using ProgressMeter, Suppressor # need to be independently installed
+
+using PyPlot # we need this to plot the posterior probabilities, must be independently installed
+
+candidatedelays = collect(0.0:0.1:20)
+
+tobs, yobs, σobs, truedelays = simulatedata();
+
 ```
 
 
