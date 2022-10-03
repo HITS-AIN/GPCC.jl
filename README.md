@@ -197,16 +197,12 @@ plot(candidatedelays, getprobabilities(loglikel))
 
 We show an example for calculating the posterior for 3 light curves.
 Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
-We evaluate the delays using a nested `map` or `pmap`:
+We evaluate the delays using a nested `map`:
 
 ```
-using Distributed
+using GPCC # make sure GPCC is made available to all workers
 
-addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
-
-@everywhere using GPCC # make sure GPCC is made available to all workers
-
-@everywhere using ProgressMeter, Suppressor # need to be independently installed
+using ProgressMeter, Suppressor # need to be independently installed
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed
 
@@ -218,6 +214,7 @@ out = @showprogress map(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kerne
 
 ```
 
+The above computation can be parallelised easily by starting additional workers and replacing the outer `map` with a `pmap`.
 
 
 
