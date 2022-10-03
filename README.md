@@ -45,7 +45,7 @@ When restarting Julia, one can re-enter this environment by simply starting Juli
 Method `simulatedata` can be used to simulate data in 2 arbitrary (non-physical) bands:
 ```
 using GPCC
-tobs, yobs, σobs, truedelays = simulatedata() # output omitted
+tobs, yobs, σobs, truedelays = simulatetwolightcurves() # output omitted
 ```
 
 <p align="center">
@@ -80,7 +80,7 @@ Having generated the simulated data, we will now model them with the GPCC model.
 ```
 using GPCC
 
-tobs, yobs, σobs, truedelays = simulatedata();
+tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 # We choose the Matern32 kernel. Other choices are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
 # We fit the model for the given the true delays 
@@ -147,7 +147,7 @@ We use `map` to run `gpcc` on all candidate delays as follows:
 ```
 using GPCC
 
-tobs, yobs, σobs, truedelays = simulatedata();
+tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
 
@@ -174,7 +174,7 @@ using PyPlot # we need this to plot the posterior probabilities, must be indepen
 
 candidatedelays = collect(0.0:0.1:20)
 
-tobs, yobs, σobs, truedelays = simulatedata();
+tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 # macro @showprogress below reports progress of pmap with a progress bar
 # macro @suppress below suppresses terminal messages produced by gpcc
@@ -194,6 +194,7 @@ plot(candidatedelays, getprobabilities(loglikel))
 ## ▶ Evaluating a set of candidate delays for 3 light curves
 
 We show an example for calculating the posterior for 3 light curves.
+Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
 We evaluate the delays using a nested `map` or `pmap`:
 
 ```
@@ -209,7 +210,7 @@ using PyPlot # we need this to plot the posterior probabilities, must be indepen
 
 candidatedelays = collect(0.0:0.1:20)
 
-tobs, yobs, σobs, truedelays = simulatedata();
+tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
 ```
 
