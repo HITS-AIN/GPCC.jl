@@ -1,5 +1,5 @@
 """
-out = performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, initialrandom = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
+out = performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, initialrandom = 1, numberoffolds = 5, rhomin = 0.1, rhomax = 20.0)
 
 Performs cross-validation for Gaussian Process Cross Correlation (GPCC) model.
 
@@ -38,13 +38,19 @@ julia> out2 = performcv(tobs, yobs, σobs, iterations=1000, numberofrestarts=3, 
 julia> getprobabilities([out1, out2]) # estimate posterior probabilities, first entry corresponding to true delays should be higher
 ```
 """
-function performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, initialrandom = 1, numberoffolds = 5, plotting = false, rhomin = 0.1, rhomax = 20.0)
+function performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 1, kernel = kernel, numberofrestarts = 1, initialrandom = 1, numberoffolds = 5, rhomin = 0.1, rhomax = 20.0)
 
-    # let user know what is run
-    str = @sprintf("\nRunning CV with %d number of folds\n\n", numberoffolds)
+    #---------------------------#
+    # let user know what is run #
+    #---------------------------#
+    
+    str = @sprintf("\nRunning CV with %d number of folds, random seed set to %d\n\n", numberoffolds, seedcv)
     colourprint(str, foreground = :cyan, bold = true)
 
 
+    #---------------------------#
+    # verify sizes of arguments #
+    #---------------------------#
 
     numberofbands = length(yobs)
 
@@ -55,42 +61,41 @@ function performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 
     end
 
 
-    # Specify folds for cross validation
-    # Each band get its own partitioning
+    #------------------------------------#
+    # Specify folds for cross validation #
+    # Each band get its own partitioning #
+    #------------------------------------#
 
-    bandfold = Array{Array{Array{Int64, 1},1}}(undef, numberofbands)
-
-    for bandindex in 1:numberofbands
-        rgkfold       = MersenneTwister(seedcv + bandindex)
-        KF            = Kfold(length(tobs[bandindex]), numberoffolds)
-        # problem with Kfold is that one cannot control the randomness of the partitioning
-        # Hence the following workaround to what we would have normally used:
-        # collect(Kfold(length(tobs[bandindex]), numberoffolds))
-        KF.permseq   .= randperm(rgkfold, length(tobs[bandindex]))
-        bandfold[bandindex] = collect(KF)
-    end
+    CVperband = [CVindices(K = numberoffolds, N = length(tobs[b]), seed = seedcv+b) for b in 1:numberofbands]
 
 
-    # Store here CV log-likelihoods calculated on left out fold
+    #-----------------------------------------------------------#
+    # Store here CV log-likelihoods calculated on left out fold #
+    #-----------------------------------------------------------#
+
     fitness = zeros(numberoffolds)
 
 
     for foldindex in 1:numberoffolds
 
-
         # Specify training indices
-        trainidx = [bandfold[bandindex][foldindex] for bandindex in 1:numberofbands]
+
+        trainidx = [taketrainfold(CVperband[bandindex], foldindex) for bandindex in 1:numberofbands]
 
         # Specify testing indices
-        testidx = [sort(setdiff(1:length(tobs[bandindex]), trainidx[bandindex])) for bandindex in 1:numberofbands]
+      
+        testidx = [taketestfold(CVperband[bandindex], foldindex) for bandindex in 1:numberofbands]
 
         # Sanity check: check splitting
+
         for i in 1:numberofbands
             @assert(all(length(trainidx[i]) + length(testidx[i]) == length(tobs[i])))
             @assert(Set(union(trainidx[i], testidx[i])) == Set(1:length(tobs[i])))
         end
 
-        # split data into training and testing
+
+        # split ***data*** into training and testing
+
         ttrain = [tobs[i][trainidx[i]] for i in 1:numberofbands]
         ytrain = [yobs[i][trainidx[i]] for i in 1:numberofbands]
         strain = [σobs[i][trainidx[i]] for i in 1:numberofbands]
@@ -108,33 +113,22 @@ function performcv(tobs, yobs, σobs; delays = delays, iterations = 1, seedcv = 
         # evaluate on held out test data
         fitness[foldindex] = predict(ttest, ytest, stest)
 
-        # produce plots for fold
-        if plotting
-
-            figure() ; cla()
-
-            clr = ["r","g","b","m"]
-
-            xtest = collect(minimum(map(minimum, tobs)):0.5:maximum(map(maximum, tobs)))
-
-            local meanpred, Sigmapred = predict(xtest)
-
-            for l in 1:numberofbands
-
-                plot(ttrain[l], ytrain[l], "o"*clr[l])
-
-                plot(ttest[l], ytest[l],   "x"*clr[l])
-
-
-                local σpred = sqrt.(max.(Sigmapred[l], 1e-6))
-
-                plot(xtest, meanpred[l], "--"*clr[l])
-
-                fill_between(xtest, meanpred[l] .- σpred, meanpred[l] .+ σpred, color = clr[l], alpha=0.15)
-
-            end
-
-        end
+        # # produce plots for fold
+        # if plotting
+        #     figure() ; cla()
+        #     clr = ["r","g","b","m"]
+        #     xtest = collect(minimum(map(minimum, tobs)):0.5:maximum(map(maximum, tobs)))
+        #     local meanpred, Sigmapred = predict(xtest)
+        #
+        #     for l in 1:numberofbands
+        #         plot(ttrain[l], ytrain[l], "o"*clr[l])
+        #         plot(ttest[l], ytest[l],   "x"*clr[l])
+        #
+        #         local σpred = sqrt.(max.(Sigmapred[l], 1e-6))
+        #         plot(xtest, meanpred[l], "--"*clr[l])
+        #         fill_between(xtest, meanpred[l] .- σpred, meanpred[l] .+ σpred, color = clr[l], alpha=0.15)
+        #     end
+        # end
 
         @printf("\t perf for fold %d is %f\n", foldindex, fitness[foldindex])
 

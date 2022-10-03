@@ -1,13 +1,14 @@
 """
-    tobs, yobs, σobs, truedelay = simulatedata(; σ = 0.75)
+    tobs, yobs, σobs, truedelay = simulatetwolightcurves(; σ = 0.75, seed = 1)
 
-Returns toy data in 2 arbitrary bands that are useful for verification and illustrative purposes.
+Returns synthetic data in 2 arbitrary bands that are useful for verification and illustrative purposes.
 Each of the returned outputs is an array of arrays.
 
 
 Arguments
 ================
 - `σ` controls Gaussian noise added to simulated fluxes
+- `seed` controls random seed for Gaussian noise generation
 
 
 Returned outputs
@@ -36,10 +37,32 @@ julia> figure(); title("first band")
 julia> errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band") # plot data of 1st band
 ```
 """
-function simulatedata(;σ = 0.75)
+function simulatetwolightcurves(;σ = 0.75, seed = 1)
+
+    t, y, σ, truedelays = simulatedata(;σ = σ, seed = seed)
+
+    return t[1:2], y[1:2], σ[1:2], truedelays[1:2] 
+
+end
 
 
-    rg = MersenneTwister(1)
+"""
+    tobs, yobs, σobs, truedelay = simulatethreelightcurves(; σ = 0.75, seed = 1)
+
+Same as method [`simulatetwolightcurves`](@ref) but returns synthetic data in 3 arbitrary bands.
+
+"""
+function simulatethreelightcurves(;σ = 0.75, seed = 1)
+
+    return simulatedata(;σ = σ, seed = seed)
+
+end
+
+
+function simulatedata(;σ = 0.75, seed = 1)
+
+
+    rg = MersenneTwister(seed)
 
     #---------------------------------------------------------------------
     # Define GP parameters
@@ -47,18 +70,18 @@ function simulatedata(;σ = 0.75)
 
     ρ = 3.5 # lengthscale
 
-    truedelays = [0.0; 2.0]
+    truedelays = [0.0; 2.0; 4.0]
 
-    α  = [1; 1.5] # scaling coefficients
+    α  = [1; 1.5;   2.0] # scaling coefficients
 
-    b  = [6; 15.0] # offset coefficients
+    b  = [6; 15.0; 25.0] # offset coefficients
 
 
     #---------------------------------------------------------------------
     # Report
     #---------------------------------------------------------------------
 
-    for i in 1:length(truedelays)
+    for i in eachindex(truedelays)
 
         @printf("\nBand %d\n", i)
         @printf("\t delayed by %.2f\n", truedelays[i])
@@ -70,9 +93,9 @@ function simulatedata(;σ = 0.75)
     # Data generation parameters
     #---------------------------------------------------------------------
 
-    N = [60; 50] # number of data items per band
+    N = [60; 50; 40] # number of data items per band
 
-    t = [rand(rg, N[1])*20, [rand(rg, 25)*8; 12.0.+rand(rg, 25)*8]]
+    t = [rand(rg, N[1])*20, [rand(rg, 25)*8; 12.0.+rand(rg, 25)*8], rand(rg, N[3])*20]
 
 
     #---------------------------------------------------------------------
@@ -102,7 +125,7 @@ function simulatedata(;σ = 0.75)
 
     mark = 0
 
-    for i in 1:length(truedelays)
+    for i in eachindex(truedelays)
 
         y[i] = Y[mark+1:mark+N[i]] * α[i] .+ b[i] .+ σ*randn(rg, N[i])
 
@@ -112,7 +135,7 @@ function simulatedata(;σ = 0.75)
 
     figure(0) ; cla()
 
-    for i in 1:length(truedelays)
+    for i in eachindex(truedelays)
 
       plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
 
