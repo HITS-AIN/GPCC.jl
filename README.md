@@ -150,6 +150,8 @@ We use `map` to run `gpcc` on all candidate delays as follows:
 ```
 using GPCC
 
+using PyPlot # we need this for plotting the posterior probabilities, must be independently installed
+
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
