@@ -19,19 +19,24 @@ Apart from cloning, an easy way of using the package is the following:
 add GPCC
 ```
 
-The package exposes four functions that may be of interest to the user: `gpcc`, `simulatedata`, `getprobabilities` and `performcv`.
+The package exposes the following functions of interest to the user: 
+- `gpcc`
+- `simulatetwolightcurves` and `simulatethreelightcurves`,
+- `getprobabilities`
+- `uniformpriordelay`.
 These functions can be queried in help mode in the Julia REPL. 
 
-In case you are installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
+
+If installing `GPCC.jl` in an existing Julia environment, there is a chance one may run into dependency problems that prevent installation. In this case, it is advisable to work in a new environment. That is
 
 ```
 mkdir("myGPCC")
 cd("myGPCC")
 # press `]` to enter package mode:
-(@v1.6) pkg> activate .
+(@v1.7) pkg> activate .
 ```
 and use this environment for installing and working with the package.
-Having exited Julia, one can enter the created environment again by simply starting Julia in the respective folder and using `activate .` in package mode.
+When restarting Julia, one can re-enter this environment by simply starting Julia in the respective folder ("myGPCC") and using `activate .` in package mode.
 
 
 
@@ -40,7 +45,7 @@ Having exited Julia, one can enter the created environment again by simply start
 Method `simulatedata` can be used to simulate data in 2 arbitrary (non-physical) bands:
 ```
 using GPCC
-tobs, yobs, σobs, truedelays = simulatedata() # output omitted
+tobs, yobs, σobs, truedelays = simulatetwolightcurves() # output omitted
 ```
 
 <p align="center">
@@ -75,21 +80,21 @@ Having generated the simulated data, we will now model them with the GPCC model.
 ```
 using GPCC
 
-tobs, yobs, σobs, truedelays = simulatedata();
+tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 # We choose the Matern32 kernel. Other choices are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
 # We fit the model for the given the true delays 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-minopt, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000, rhomax = 300)
+mll, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000, rhomax = 300)
 ```
 The call returns three outputs:
-- the (local) optimum marginal likelihood `minopt` reached by the optimiser.
+- the marginal log likelihood `mll` reached by the optimiser.
 - a function `pred` for making predictions.
 - a tuple that contains the scaling coefficients $\alpha$, posterior distribution `postb` (of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal)) for shift $b$  and lengthscale $\rho$ of the latent Gaussian process.
 
-We show below that function `pred` can be used both for making predictions and calculating the predictive likelihood.
+We show below how function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
 ## ▶ How to make predictions
 
@@ -130,7 +135,89 @@ ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
 pred(ttest, ytest, σtest)
 ```
 
+## ▶ Evaluating a set of candidate delays
 
+Given the simulated data, suppose we would like to evaluate the posterior probability of a set of candidate delays.
+Noting that without loss of generality we can always set the delay of the 1st band equal to zero, we define the following grid of delays:
+```
+candidatedelays = collect(0.0:0.2:20)
+```
+
+We use `map` to run `gpcc` on all candidate delays as follows:
+```
+using GPCC
+
+tobs, yobs, σobs, truedelays = simulatetwolightcurves();
+
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+
+loglikel = map(helper, candidatedelays)
+
+figure()
+
+plot(candidatedelays, getprobabilities(loglikel))
+```
+
+## ▶ Evaluating a set of candidate delays in parallel
+
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
+```
+using Distributed
+
+addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
+
+@everywhere using GPCC # make sure GPCC is made available to all workers
+
+@everywhere using ProgressMeter, Suppressor # need to be independently installed
+
+using PyPlot # we need this to plot the posterior probabilities, must be independently installed
+
+candidatedelays = collect(0.0:0.1:20)
+
+tobs, yobs, σobs, truedelays = simulatetwolightcurves();
+
+# macro @showprogress below reports progress of pmap with a progress bar
+# macro @suppress below suppresses terminal messages produced by gpcc
+
+loglikel = @showprogress pmap(candidatedelays) do delay
+
+  @suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+
+end
+
+figure()
+
+plot(candidatedelays, getprobabilities(loglikel))
+```
+
+
+## ▶ Evaluating a set of candidate delays for 3 light curves
+
+We show an example for calculating the posterior for 3 light curves.
+Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
+We evaluate the delays using a nested `map` or `pmap`:
+
+```
+using Distributed
+
+addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
+
+@everywhere using GPCC # make sure GPCC is made available to all workers
+
+@everywhere using ProgressMeter, Suppressor # need to be independently installed
+
+using PyPlot # we need this to plot the posterior probabilities, must be independently installed
+
+candidatedelays = collect(0.0:0.1:20)
+
+tobs, yobs, σobs, truedelays = simulatethreelightcurves();
+
+```
+
+
+
+
+<!---
 
 ## ▶ How to decide between candidate delays using `performcv`
 
@@ -178,3 +265,4 @@ post2 = getprobabilities(cvresults2)
 # that the same random seeds are used both in parallel and single worker mode
 all(post .≈ post2)
 ```
+-->
