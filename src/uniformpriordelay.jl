@@ -1,7 +1,11 @@
 """
+    uniformpriordelay(; L = L, z = z)
+
 Uniform prior on delay τ.
 It calculates an upper limit on what the delay can be.
 This is a theoretical prior based on considerations concerning photoionisation.
+Argument `L` is the luminisity.
+Argument `z`` is the redshift.
 """
 function uniformpriordelay(; L = L, z = z)
     
