@@ -112,6 +112,8 @@ Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers t
 </p>
 
 ```
+using PyPlot # must be independently installed
+figure()
 colours = ["blue", "orange"] # define colours
 
 for i in 1:2
