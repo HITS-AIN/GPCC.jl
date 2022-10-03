@@ -207,7 +207,7 @@ using ProgressMeter, Suppressor # need to be independently installed
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed
 
-candidatedelays = collect(0.5:0.025:6) # use smaller and finer range
+candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
