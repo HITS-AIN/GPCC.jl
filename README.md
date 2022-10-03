@@ -234,8 +234,10 @@ title("marginal posterior for lightcurve 3")
 plot(candidatedelays,vec(sum(posterior,dims=1)))
 ```
 
+We should obtain a joint posterior and marginal posteriors like the ones plotted below:
+
 <p align="center">
-  <img src=2Dposterior.png alt="2Dposterior" width="400" height="400">
+  <img src=2Dposterior.png alt="2Dposterior">
 </p>
 
 The above computation can be parallelised easily by starting additional workers and replacing the outer `map` with a `pmap`.
