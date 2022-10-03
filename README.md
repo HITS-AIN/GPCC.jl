@@ -211,7 +211,7 @@ candidatedelays = collect(0.5:0.025:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
-out = @showprogress map(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1, rhomax = 300)[1]), candidatedelays), candidatedelays)
+out = @showprogress map(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays)
 
 ```
 
