@@ -24,6 +24,7 @@ The package exposes the following functions of interest to the user:
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
 - `getprobabilities`
 - `uniformpriordelay`.
+
 These functions can be queried in help mode in the Julia REPL. 
 
 
