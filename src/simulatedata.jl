@@ -1,5 +1,5 @@
 """
-    tobs, yobs, σobs, truedelay = simulatetwolightcurves(; σ = 0.75, seed = 1)
+    simulatetwolightcurves(;σ = 0.75, seed = 1)
 
 Returns synthetic data in 2 arbitrary bands that are useful for verification and illustrative purposes.
 Each of the returned outputs is an array of arrays.
@@ -39,7 +39,24 @@ julia> errorbar(tobs[1], yobs[1], yerr=σobs[1], fmt="o", label="1st band") # pl
 """
 function simulatetwolightcurves(;σ = 0.75, seed = 1)
 
-    t, y, σ, truedelays = simulatedata(;σ = σ, seed = seed)
+    t, y, σ, truedelays, α, b = simulatedata(;σ = σ, seed = seed)
+
+
+    figure()
+
+    for i in 1:2
+
+        plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
+
+        @printf("\nBand %d\n", i)
+        @printf("\t delayed by %.2f\n", truedelays[i])
+        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
+        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
+  
+    end
+
+    legend()
+
 
     return t[1:2], y[1:2], σ[1:2], truedelays[1:2] 
 
@@ -54,7 +71,24 @@ Same as method [`simulatetwolightcurves`](@ref) but returns synthetic data in 3 
 """
 function simulatethreelightcurves(;σ = 0.75, seed = 1)
 
-    return simulatedata(;σ = σ, seed = seed)
+    t, y, σ, truedelays, α, b = simulatedata(;σ = σ, seed = seed)
+
+    figure()
+
+    for i in eachindex(truedelays)
+
+        plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
+
+        @printf("\nBand %d\n", i)
+        @printf("\t delayed by %.2f\n", truedelays[i])
+        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
+        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
+
+    end
+
+    legend()
+
+    return t, y, σ, truedelays 
 
 end
 
@@ -77,17 +111,6 @@ function simulatedata(;σ = 0.75, seed = 1)
     b  = [6; 15.0; 25.0] # offset coefficients
 
 
-    #---------------------------------------------------------------------
-    # Report
-    #---------------------------------------------------------------------
-
-    for i in eachindex(truedelays)
-
-        @printf("\nBand %d\n", i)
-        @printf("\t delayed by %.2f\n", truedelays[i])
-        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
-        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
-    end
 
     #---------------------------------------------------------------------
     # Data generation parameters
@@ -133,17 +156,7 @@ function simulatedata(;σ = 0.75, seed = 1)
 
     end
 
-    figure(0) ; cla()
-
-    for i in eachindex(truedelays)
-
-      plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
-
-    end
-
-    legend()
-
-    return t, y, [σ*ones(size(yᵢ)) for yᵢ in y], truedelays
+    return t, y, [σ*ones(size(yᵢ)) for yᵢ in y], truedelays, α, b
 
 
 end
