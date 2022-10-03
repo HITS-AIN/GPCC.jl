@@ -213,9 +213,30 @@ candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
-out = @showprogress map(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays)
+out = @showprogress map(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
 
+posterior = getprobabilities(reduce(vcat, out));
+
+posterior = reshape(posterior, length(candidatedelays), length(candidatedelays));
+
+figure()
+subplot(311)
+title("joint posterior")
+pcolor(candidatedelays,candidatedelays,posterior)
+ylabel("lightcurve 2"); xlabel("lightcurve 3")
+
+subplot(312)
+title("marginal posterior for lightcurve 2")
+plot(candidatedelays,vec(sum(posterior,dims=2)))
+
+subplot(313)
+title("marginal posterior for lightcurve 3")
+plot(candidatedelays,vec(sum(posterior,dims=1)))
 ```
+
+<p align="center">
+  <img src=2Dposterior.png alt="2Dposterior" width="400" height="400">
+</p>
 
 The above computation can be parallelised easily by starting additional workers and replacing the outer `map` with a `pmap`.
 
