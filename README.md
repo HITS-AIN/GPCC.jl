@@ -240,7 +240,7 @@ We should obtain a joint posterior and marginal posteriors like the ones plotted
   <img src=2Dposterior.png alt="2Dposterior">
 </p>
 
-The above computation can be parallelised easily by starting additional workers and replacing the outer `map` with a `pmap`.
+The above computation can be parallelised by starting additional workers and replacing the outer `map` with a `pmap`.
 
 
 
