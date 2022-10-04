@@ -67,7 +67,7 @@ Similarly `yobs[1]` contains the flux measurements for the 1st band and `σobs[1
 We can plot the data pertaining to the 2nd band as an example:
 
 ```
-using PyPlot # must be indepedently installed
+using PyPlot # must be indepedently installed, other plotting packages can be used instead
 figure()
 errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 ```
@@ -113,7 +113,7 @@ Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers t
 </p>
 
 ```
-using PyPlot # must be independently installed
+using PyPlot # must be independently installed, other plotting packages can be used instead
 
 colours = ["blue", "orange"] # define colours
 
@@ -150,7 +150,7 @@ We use `map` to run `gpcc` on all candidate delays as follows:
 ```
 using GPCC
 
-using PyPlot # we need this for plotting the posterior probabilities, must be independently installed
+using PyPlot # we need this for plotting the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
@@ -175,7 +175,7 @@ addprocs(4) # add four workers. Alternatively start Julia with mulitple workers 
 
 @everywhere using ProgressMeter, Suppressor # need to be independently installed
 
-using PyPlot # we need this to plot the posterior probabilities, must be independently installed
+using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 candidatedelays = collect(0.0:0.1:20)
 
@@ -207,7 +207,7 @@ using GPCC
 
 using ProgressMeter, Suppressor # need to be independently installed
 
-using PyPlot # we need this to plot the posterior probabilities, must be independently installed
+using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
