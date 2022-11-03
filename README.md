@@ -12,7 +12,7 @@
 
 Apart from cloning, an easy way of using the package is the following:
 
-1 - Add the registry [CollaborativeAstronomyJulia](https://github.com/ngiann/CollaborativeAstronomyJulia). (❗ change this to [AINJuliaRegistry](https://github.com/HITS-AIN/AINJuliaRegistry) once public)
+1 - Add the registry [AINJuliaRegistry](https://github.com/HITS-AIN/AINJuliaRegistry)
 
 2 - Switch into "package mode" with ```]``` and add the package with
 ```
