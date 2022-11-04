@@ -1,7 +1,7 @@
 name = "GPCC"
 uuid = "4498ab02-56af-48f6-b5af-4c1c07c71523"
 authors = ["ngiann <ngiann@gmail.com> and contributors"]
-version = "0.1.33"
+version = "0.1.34"
 
 [deps]
 BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
