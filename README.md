@@ -6,7 +6,11 @@
 
 
 
+## ℹ What is this?
 
+It is a julia implementation of the Gaussian Process Cross Correlation (GPCC) method introduced in 
+
+*A Gaussian process cross-correlation approach to time delay estimation for reverberation mapping of active galactic nuclei*.
 
 ## 💾 Installation
 
