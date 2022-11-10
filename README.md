@@ -47,7 +47,7 @@ When restarting Julia, one can re-enter this environment by simply starting Juli
 
 ## ▶ How to simulate data
 
-Method `simulatedata` can be used to simulate data in 2 arbitrary (non-physical) bands:
+Method `simulatetwolightcurves` can be used to simulate data in 2 arbitrary (non-physical) bands:
 ```
 using GPCC
 tobs, yobs, σobs, truedelays = simulatetwolightcurves() # output omitted
