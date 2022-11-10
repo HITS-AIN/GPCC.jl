@@ -6,17 +6,14 @@ function getprobabilities(loglikel)
 
 end
 
+
 function getprobabilities(loglikel, logpriorpdfvalues)
 
     # add log prior to form log joint likelihood
 
-    for i in eachindex(loglikel)
-        
-        loglikel[i] += logpriorpdfvalues[i]
+    joint_loglikel = loglikel .+ logpriorpdfvalues
 
-    end
-
-    posterior = exp.(loglikel .- logsumexp(loglikel))
+    posterior = exp.(joint_loglikel .- logsumexp(joint_loglikel))
 
     return posterior
     
