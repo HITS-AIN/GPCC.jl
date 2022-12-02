@@ -1,6 +1,6 @@
 name = "GPCC"
 uuid = "4498ab02-56af-48f6-b5af-4c1c07c71523"
-authors = ["ngiann <ngiann@gmail.com> and contributors"]
+authors = ["ngiann <ngiann@gmail.com>"]
 version = "0.1.35"
 
 [deps]
