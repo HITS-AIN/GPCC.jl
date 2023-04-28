@@ -1,6 +1,6 @@
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 ![GitHub](https://img.shields.io/github/license/HITS-AIN/GPCC.jl)
-
+<a href="https://ascl.net/2303.006"><img src="https://img.shields.io/badge/ascl-2303.006-blue.svg?colorB=262255" alt="ascl:2303.006" /></a>
 
 
 <h1 align="center">GPCC.jl</h1>
