@@ -1,3 +1,7 @@
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+![GitHub](https://img.shields.io/github/license/HITS-AIN/GPCC.jl)
+
+
 
 <h1 align="center">GPCC.jl</h1>
 <p align="center">
