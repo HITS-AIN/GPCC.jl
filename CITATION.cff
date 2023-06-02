@@ -1,0 +1,20 @@
+cff-version: 1.1.0
+message: "Please cite the following works when using this software: https://ui.adsabs.harvard.edu/abs/2023ascl.soft03006P"
+authors:
+- family-names: Pozo Nuñez
+  given-names: Francisco
+- family-names: Gianniotis
+  given-names: Nikolaos
+- family-names: Polsterer
+  given-names: Kai Lars
+title: "GPCC: Gaussian process cross-correlation for time delay estimation"
+version: PLACEHOLDER
+date-released: PLACEHOLDER
+identifiers:
+ - type: "ascl-id"
+   value: "2303.006"
+ - type: "doi"
+   value: PLACEHOLDER
+ - type: "bibcode"
+   value: "2023ascl.soft03006P"
+abstract: "Gaussian Process Cross-Correlation (GPCC) uses Gaussian processes to estimate time delays for reverberation mapping (RM) of Active Galactic Nuclei (AGN). This statistically principled model delivers a posterior distribution for the delay and accounts for observational noise and the non-uniform sampling of the light curves. Written in Julia, GPCC quantifies the uncertainty and propagates it to subsequent calculations of dependent physical quantities, such as black hole masses. The code delivers out-of-sample predictions, which enables model selection, and can calculate the joint posterior delay for more than two light curves. Though written for RM, the software can also be applied to other fields where cross-correlation analysis is performed."
