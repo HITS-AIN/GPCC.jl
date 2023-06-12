@@ -272,11 +272,11 @@ are not aware of the environment you are using. To make them aware of the activa
 ```
 in order to activate the environment for each worker.
 
-Once `GPCC` is available to all workers, then simply use the above script as is except for the statement:
+Once `GPCC` is available to all workers, simply use the above script as is except for the statement:
 ```
 out = @showprogress pmap(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
 ```
-Note that the outer `map` has been replaced with a `pmap`.
+where the outer `map` has been replaced with a `pmap`.
 
 
 <!---
