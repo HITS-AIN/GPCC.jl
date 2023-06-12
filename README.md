@@ -249,7 +249,34 @@ We should obtain a joint posterior and marginal posteriors like the ones plotted
 </p>
 
 The above computation can be parallelised by starting additional workers and replacing the outer `map` with a `pmap`.
+To achieve this, start Julia with the desired number of processes / workers:
+```
+julia -p4 # starts julia with 4 workers
+```
+Once Julia has started, you will also need to make `GPCC` available to all 4 workers:
+```
+@everywhere using GPCC
+```
 
+If you are using  `GPCC` within an environment (i.e. you started Julia and then used e.g.`activate .`),
+then you may encounter the following error:
+```
+ERROR: ArgumentError: Package GPCC not found in current path.
+```
+despite the fact that you have correctly installed the package.
+The reason that you may get this message is simply because the workers
+are not aware of the environment you are using. To make them aware of the activated environment, please use
+```
+@everywhere using Pkg
+@everwhere Pkg.activate(".")
+```
+in order to activate the environment for each worker.
+
+Once `GPCC` is available to all workers, then simply use the above script as is except for the statement:
+```
+out = @showprogress pmap(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
+```
+Note that the outer `map` has been replaced with a `pmap`.
 
 
 <!---
