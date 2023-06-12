@@ -242,7 +242,7 @@ title("marginal posterior for lightcurve 3")
 plot(candidatedelays,vec(sum(posterior,dims=1)))
 ```
 
-We should obtain a joint posterior and marginal posteriors like the ones plotted below:
+We should obtain a joint posterior and marginal posteriors similar to the ones plotted below:
 
 <p align="center">
   <img src=2Dposterior.png alt="2Dposterior">
