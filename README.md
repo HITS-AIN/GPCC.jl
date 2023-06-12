@@ -264,8 +264,9 @@ then you may encounter the following error:
 ERROR: ArgumentError: Package GPCC not found in current path.
 ```
 despite the fact that you have correctly installed the package.
-The reason that you may get this message is simply because the workers
-are not aware of the environment you are using. To make them aware of the activated environment, please use
+The reason that you may get this error message is simply because the workers
+are not aware of the environment you are using.
+To make all workers aware of the activated environment, please use
 ```
 @everywhere using Pkg
 @everwhere Pkg.activate(".")
@@ -276,7 +277,7 @@ Once `GPCC` is available to all workers, simply use the above script as is excep
 ```
 out = @showprogress pmap(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
 ```
-where the outer `map` has been replaced with a `pmap`.
+where the outer `map` has now been replaced with a `pmap`.
 
 
 <!---
