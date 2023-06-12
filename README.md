@@ -280,6 +280,13 @@ out = @showprogress pmap(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kern
 where the outer `map` has now been replaced with a `pmap`.
 
 
+❗ Running GPCC on three light curves can be very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
+
+
+
+
+
+
 <!---
 
 ## ▶ How to decide between candidate delays using `performcv`
