@@ -19,7 +19,7 @@ Input arguments
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
 - `seed`: Random seed controls the random sampling of initial solution.
 - `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
-- `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
+- `initialrandom`: Before optimisation begins, a number of random solutions are sampled and the one with the highest likelihood becomes the starting point for the optimisation.
 - `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
 - `rhomax`: maximum value for lengthscale ρ of GP.
 
