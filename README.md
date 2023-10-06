@@ -16,6 +16,12 @@ It is a julia implementation of the Gaussian Process Cross Correlation (GPCC) me
 
 [*A Gaussian process cross-correlation approach to time delay estimation for reverberation mapping of active galactic nuclei*](https://github.com/HITS-AIN/GPCCpaper).
 
+GPCC is a probabilistic alternative to the Interpolated Cross Correlation function (ICCF). Advantages over the ICCF include:
+
+- Outputs a probability distribution for the delay.
+- It can incorporate a prior on the delay.
+- Delivers predictions for out-of-sample data.
+
 ## 💾 Installation
 
 Apart from cloning, an easy way of using the package is the following:
