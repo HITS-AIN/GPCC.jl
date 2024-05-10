@@ -178,32 +178,26 @@ figure()
 plot(candidatedelays, getprobabilities(loglikel))
 ```
 
-## ▶ Evaluating a set of candidate delays in parallel
+## ▶ Evaluating a set of candidate delays in parallel threads
 
-One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `tmap` provided by the package [ThreadTools.jl](https://github.com/baggepinnen/ThreadTools.jl). 
+Package `ThreadTools.jl` needs to be independently installed. Before that, one has to make sure that multiple threads are available by starting Julia with e.g. `julia -t 4` option:
 ```
-using Distributed
+using GPCC
 
-addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
-
-@everywhere using GPCC # make sure GPCC is made available to all workers
-
-@everywhere using ProgressMeter, Suppressor # need to be independently installed
+using ProgressMeter, ThreadTools # need to be independently installed
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
-candidatedelays = collect(0.0:0.1:20)
+candidatedelays = collect(0.0:0.1:20);
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
-# macro @showprogress below reports progress of pmap with a progress bar
-# macro @suppress below suppresses terminal messages produced by gpcc
+ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...) # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
 
-loglikel = @showprogress pmap(candidatedelays) do delay
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
 
-  @suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
-
-end
+loglikel = @showprogress tmap(helper, candidatedelays)
 
 figure()
 
@@ -211,24 +205,28 @@ plot(candidatedelays, getprobabilities(loglikel))
 ```
 
 
-## ▶ Evaluating a set of candidate delays for 3 light curves
+## ▶ Evaluating a set of candidate delays for 3 light curves in parallel
 
-We show an example for calculating the posterior for 3 light curves.
+We show an example for calculating the posterior for 3 light curves in parallel.
+To do this, we need to start Julia with multiple threads, e.g. `julia -t 4` starts Julia with 4 threads.
 Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
-We evaluate the delays using a nested `map`:
+We evaluate the delays using a `tmap` inside a `map`:
 
 ```
 using GPCC
 
-using ProgressMeter, Suppressor # need to be independently installed
+using ProgressMeter, ThreadTools # need to be independently installed
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
+
+ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...)
+# this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
 
 candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
-out = @showprogress map(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
+out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
 
 posterior = getprobabilities(reduce(vcat, out));
 
@@ -255,91 +253,8 @@ We should obtain a joint posterior and marginal posteriors similar to the ones p
   <img src=2Dposterior.png alt="2Dposterior">
 </p>
 
-The above computation can be parallelised by starting additional workers and replacing the outer `map` with a `pmap`.
-To achieve this, start Julia with the desired number of processes / workers:
-```
-julia -p4 # starts julia with 4 workers
-```
-Once Julia has started, you will also need to make `GPCC` available to all 4 workers:
-```
-@everywhere using GPCC
-```
-
-If you are using  `GPCC` within an environment (i.e. you started Julia and then used e.g.`activate .`),
-then you may encounter the following error:
-```
-ERROR: ArgumentError: Package GPCC not found in current path.
-```
-despite the fact that you have correctly installed the package.
-The reason that you may get this error message is simply because the workers
-are not aware of the environment you are using.
-To make all workers aware of the activated environment, please use
-```
-@everywhere using Pkg
-@everwhere Pkg.activate(".")
-```
-in order to activate the environment for each worker.
-
-Once `GPCC` is available to all workers, simply use the above script as is except for the statement:
-```
-out = @showprogress pmap(d2 -> map(d1 -> (@suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
-```
-where the outer `map` has now been replaced with a `pmap`.
-
 
 ❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
 
 
-
-
-
-<!---
-
-## ▶ How to decide between candidate delays using `performcv`
-
-Suppose we did not know what the true delays characterising the simulated light curves were.
-In this case we would propose a few candidate delays, like e.g.
-```
-candidatedelays = 0.0:0.1:5.0
-```
-and subject them to $5$-fold cross-validation as follows:
-```
-cvresults = map(candidatedelays) do d
-  performcv(tobs, yobs, σobs; kernel =  GPCC.matern32, delays = [0;d], iterations = 1000, numberoffolds = 5)
-end
-```
-
-We obtain approximate posterior probabilities with:
-```
-post = getprobabilities(cvresults)
-figure()
-plot(candidatedelays, post, "o-"); xlabel("delays"); ylabel("prob") # PyPlot must be imported
-```
-
-<p align="center">
-  <img src=delay_vs_prob.png>
-</p>
-
-
-## ▶ How to use `performcv` on multiple cores
-
-One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
-```
-using Distributed
-addprocs(2) # add two workers. Alternatively start Julia with mulitple workers e.g. julia -p 2
-@everywhere using GPCC # make sure GPCC is made available to all workers
-
-cvresults2 = pmap(candidatedelays) do d
-  performcv(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d], iterations = 1000, numberoffolds = 5)
-end
-
-post2 = getprobabilities(cvresults2)
-
-
-# Check that the results are approximately the same.
-# Note that results will not be exactly identical as the code does not guarantee
-# that the same random seeds are used both in parallel and single worker mode
-all(post .≈ post2)
-```
--->
