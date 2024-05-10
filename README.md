@@ -210,22 +210,23 @@ plot(candidatedelays, getprobabilities(loglikel))
 We show an example for calculating the posterior for 3 light curves in parallel.
 To do this, we need to start Julia with multiple threads, e.g. `julia -t 4` starts Julia with 4 threads.
 Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
-We evaluate the delays using a `map` inside a `tmap`:
+We evaluate the delays using a `tmap` inside a `map`:
 
 ```
 using GPCC
 
-using ProgressMeter # need to be independently installed
+using ProgressMeter, ThreadTools # need to be independently installed
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
-ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...) # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
+ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...)
+# this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
 
 candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
-out = @showprogress tmap(d2 -> map(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
+out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
 
 posterior = getprobabilities(reduce(vcat, out));
 
