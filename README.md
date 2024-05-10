@@ -205,11 +205,12 @@ plot(candidatedelays, getprobabilities(loglikel))
 ```
 
 
-## ▶ Evaluating a set of candidate delays for 3 light curves
+## ▶ Evaluating a set of candidate delays for 3 light curves in parallel
 
-We show an example for calculating the posterior for 3 light curves.
+We show an example for calculating the posterior for 3 light curves in parallel.
+To do this, we need to start Julia with multiple threads, e.g. `julia -t 4` starts Julia with 4 threads.
 Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
-We evaluate the delays using a nested `map`:
+We evaluate the delays using a `map` inside a `tmap`:
 
 ```
 using GPCC
@@ -251,7 +252,6 @@ We should obtain a joint posterior and marginal posteriors similar to the ones p
   <img src=2Dposterior.png alt="2Dposterior">
 </p>
 
-The above computation can be parallelised by starting additional threads and replacing the outer `map` with a `tmap` (see example [above](https://github.com/HITS-AIN/GPCC.jl/blob/workingversion/README.md#-evaluating-a-set-of-candidate-delays-in-parallel-threads)).
 
 ❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
