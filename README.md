@@ -249,7 +249,7 @@ We should obtain a joint posterior and marginal posteriors similar to the ones p
   <img src=2Dposterior.png alt="2Dposterior">
 </p>
 
-The above computation can be parallelised by starting additional threads and replacing the outer `map` with a `tmap` (see example [above](##-evaluating-a-set-of-candidate-delays-in-parallel)).
+The above computation can be parallelised by starting additional threads and replacing the outer `map` with a `tmap` (see example [above](#-evaluating-a-set-of-candidate-delays-in-parallel)).
 
 ❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
