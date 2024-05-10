@@ -103,7 +103,7 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-loglikel, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000, rhomax = 300)
+loglikel, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000, rhomax = 300)
 ```
 The call returns three outputs:
 - the marginal log likelihood `loglikel` reached by the optimiser.
@@ -169,7 +169,7 @@ using PyPlot # we need this for plotting the posterior probabilities, must be in
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
 
 loglikel = map(helper, candidatedelays)
 
@@ -195,7 +195,7 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...) # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
 
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
 
 loglikel = @showprogress tmap(helper, candidatedelays)
 
@@ -226,7 +226,7 @@ candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
-out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
+out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
 
 posterior = getprobabilities(reduce(vcat, out));
 
