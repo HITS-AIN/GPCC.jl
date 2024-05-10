@@ -180,30 +180,24 @@ plot(candidatedelays, getprobabilities(loglikel))
 
 ## ▶ Evaluating a set of candidate delays in parallel
 
-One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `pmap`. Before that, one has to make sure that multiple workers are available:
+One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `tmap` provided by the package [ThreadTools.jl](https://github.com/baggepinnen/ThreadTools.jl). 
+Package `ThreadTools.jl` needs to be independently installed. Before that, one has to make sure that multiple threads are available by starting Julia with e.g. `julia -t 4` option:
 ```
-using Distributed
+using GPCC
 
-addprocs(4) # add four workers. Alternatively start Julia with mulitple workers e.g. julia -p 4
-
-@everywhere using GPCC # make sure GPCC is made available to all workers
-
-@everywhere using ProgressMeter, Suppressor # need to be independently installed
+using ProgressMeter, ThreadTools # need to be independently installed
 
 using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
-candidatedelays = collect(0.0:0.1:20)
+candidatedelays = collect(0.0:0.1:20);
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
-# macro @showprogress below reports progress of pmap with a progress bar
-# macro @suppress below suppresses terminal messages produced by gpcc
+ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...) # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
 
-loglikel = @showprogress pmap(candidatedelays) do delay
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
 
-  @suppress gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
-
-end
+loglikel = @showprogress tmap(helper, candidatedelays)
 
 figure()
 
