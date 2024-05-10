@@ -1,5 +1,5 @@
 """
-    loglikel, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+    loglikel, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -22,6 +22,7 @@ Input arguments
 - `initialrandom`: Before optimisation begins, a number of random solutions are sampled and the one with the highest likelihood becomes the starting point for the optimisation.
 - `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
 - `rhomax`: maximum value for lengthscale ρ of GP.
+- `verbose`: true / false (default). If set to `true`, auxiliary messages will be printed out 
 
 
 Returned arguments
@@ -43,17 +44,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -101,9 +102,10 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Let user know what is being run
     #---------------------------------------------------------------------
 
-    informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
-
+    if verbose 
+        informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
+                    initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
+    end
 
     #---------------------------------------------------------------------
     # Functions for constraining parameters
@@ -176,9 +178,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     end
 
 
-    @printf("\n\tInitial ρ values are:\n")
+    if verbose 
+        
+        @printf("\n\tInitial ρ values are:\n")
 
-    map(x -> @printf("\t%f\n", x), initialρvalues)
+        map(x -> @printf("\t%f\n", x), initialρvalues)
+
+    end
 
 
     #---------------------------------------------------------------------
@@ -225,14 +231,16 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     paramopt   = result.minimizer
 
-    @printf("\n\tOverall minimum is %f\n", result.minimum)
+    if verbose
+        @printf("\n\tOverall minimum is %f\n", result.minimum)
+    end
 
 
     #---------------------------------------------------------------------
     # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
-    @show α, ρ = unpack(paramopt)
+    α, ρ = unpack(paramopt)
 
     K = delayedCovariance(kernel, α, τ, ρ, tarray)
 
