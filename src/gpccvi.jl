@@ -44,17 +44,7 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = 100.0, ρ = NaN, verbose = false)
-
-    # Same function as below, but easier name for user to call
-
-    _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, ρfixed = ρ, verbose = verbose)
-
-
-end
-
-
-function _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, ρfixed = ρfixed, verbose = verbose)
+function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρmin = 0.1, ρmax = 20.0,  verbose = true)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -67,11 +57,7 @@ function _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterati
     # Set constants
     #---------------------------------------------------------------------
 
-    JITTER = 1e-8
-
     L = length(tarray)
-
-    OPTIMISEρ = isnan(ρfixed) ? :optimise_ρ : :do_not_optimise_ρ
 
 
     #---------------------------------------------------------------------
@@ -100,22 +86,26 @@ function _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterati
 
     b̄  = Q * μb
 
+
     #---------------------------------------------------------------------
     # Let user know what is being run
     #---------------------------------------------------------------------
 
-   
-
+    
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    # makeα(x) = makepositive(x) + 1e-8
-
-    # makeρ(x) = transformbetween(x, ρmin, ρmax)
-
-
-    function unpack(param, ::Val{:do_not_optimise_ρ})
+    f(x) = [softplus.(x[1:2L-1]);    transformbetween(x[2L], ρmin, ρmax)]
+    
+    g(x) = [invsoftplus.(x[1:2L-1]); invtransformbetween(x[2L], ρmin, ρmax)]
+    
+  
+    #---------------------------------------------------------------------
+    # Handle parameter vector
+    #---------------------------------------------------------------------
+  
+    function unpack(param)
 
         @assert(length(param) == 2L)
 
@@ -129,21 +119,7 @@ function _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterati
 
     end
 
-    # function unpack(param, ::Val{:optimise_ρ})
-
-    #     @assert(length(param) == L + 1)
-
-    #     local α = makeα.(param[1:1L])
-
-    #     local ρ = makeρ(param[L+1])
-
-    #     return α, ρ
-
-    # end
-
-    unpack(param) = unpack(param, Val(OPTIMISEρ))
-
-
+ 
     #---------------------------------------------------------------------
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
@@ -156,19 +132,7 @@ function _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterati
 
     end
     
-    # helper(p) = objective(unpack(p)...)
-
-    # return VIdiag(helper, 0.01*randn(rg, 2L-1), iterations = iterations,S=300,show_every=1,test_every=50,Stest=1000)
-
     helper(p) = objective(unpack(p)...)
-
-    fwd(x) = softplus(x)
-
-    bwd(x) = invsoftplus(x)
-
-    f(x) = fwd.(x)#[fwd.(x[1:L]); x[L+1:2L-1]; fwd(x[2L])]
-    
-    g(x) = bwd.(x)#[bwd.(x[1:L]); x[L+1:2L-1]; bwd(x[2L])]
 
     elbo = elbofy(2L, 500, helper, transform = f)
 
@@ -177,7 +141,7 @@ function _gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterati
 
     opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 2)
 
-    θ = optimize(elbohelper, [0.01*randn(rg, 2L);0.1*ones(2L)], NelderMead(), opt).minimizer
+    θ = optimize(elbohelper, [0.01*randn(rg, 2L); 0.1*ones(2L)], NelderMead(), opt).minimizer
 
     MvNormal(θ[1:2L], θ[2L+1:end]), helper, f, g
     
