@@ -75,7 +75,7 @@ function simulatethreelightcurves(;σ = 0.75, seed = 1)
 
     figure()
 
-    for i in eachindex(truedelays)
+    for i in 1:3
 
         plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
 
@@ -88,7 +88,30 @@ function simulatethreelightcurves(;σ = 0.75, seed = 1)
 
     legend()
 
-    return t, y, σ, truedelays 
+    return t[1:3], y[1:3], σ[1:3], truedelays[1:3]
+
+end
+
+function simulatefourlightcurves(;σ = 0.75, seed = 1)
+
+    t, y, σ, truedelays, α, b = simulatedata(;σ = σ, seed = seed)
+
+    figure()
+
+    for i in 1:4
+
+        plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
+
+        @printf("\nBand %d\n", i)
+        @printf("\t delayed by %.2f\n", truedelays[i])
+        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
+        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
+
+    end
+
+    legend()
+
+    return t[1:4], y[1:4], σ[1:4], truedelays 
 
 end
 
@@ -104,11 +127,11 @@ function simulatedata(;σ = 0.75, seed = 1)
 
     ρ = 3.5 # lengthscale
 
-    truedelays = [0.0; 2.0; 4.0]
+    truedelays = [0.0; 2.0; 4.0; 7.0]
 
-    α  = [1; 1.5;   2.0] # scaling coefficients
+    α  = [1; 1.5;   2.0;  3.0] # scaling coefficients
 
-    b  = [6; 15.0; 25.0] # offset coefficients
+    b  = [6; 15.0; 25.0; 30.0] # offset coefficients
 
 
 
@@ -116,33 +139,33 @@ function simulatedata(;σ = 0.75, seed = 1)
     # Data generation parameters
     #---------------------------------------------------------------------
 
-    N = [60; 50; 40] # number of data items per band
+    N = [60; 50; 40; 30] # number of data items per band
 
-    t = [rand(rg, N[1])*20, [rand(rg, 25)*8; 12.0.+rand(rg, 25)*8], rand(rg, N[3])*20]
+    t = [rand(rg, N[1])*25, [rand(rg, 25)*8; 12.0.+rand(rg, 25)*8], rand(rg, N[3])*20, rand(rg, N[4])*25]
 
 
     #---------------------------------------------------------------------
     # Define Gaussian process to draw noisy targets
     #---------------------------------------------------------------------
 
-    C = delayedCovariance(rbf, α, truedelays, ρ, t)
+    C = delayedCovariance(rbf, α, truedelays, ρ, t)  + Diagonal(σ^2*ones(sum(N)))
 
-    let
+    # let
 
-        U, S, V = svd(C)
+    #     U, S, V = svd(C)
 
-        C = U * Diagonal(max.(1e-6, abs.(S))) * U'
+    #     C = U * Diagonal(max.(1e-6, abs.(S))) * U'
 
-        makematrixsymmetric!(C)
+    #     makematrixsymmetric!(C)
 
-    end
+    # end
 
 
     #---------------------------------------------------------------------
     # Draw targets and arrange in array
     #---------------------------------------------------------------------
 
-    Y = rand(rg, MvNormal(zeros(sum(N)), C))
+    Y = rand(rg, MvNormal([b[1]*ones(N[1]); b[2]*ones(N[2]); b[3]*ones(N[3]); b[4]*ones(N[4])], C))
 
     y = Vector{Vector{Float64}}(undef, length(truedelays))
 
@@ -150,7 +173,7 @@ function simulatedata(;σ = 0.75, seed = 1)
 
     for i in eachindex(truedelays)
 
-        y[i] = Y[mark+1:mark+N[i]] * α[i] .+ b[i] .+ σ*randn(rg, N[i])
+        y[i] = Y[mark+1:mark+N[i]] #* α[i] .+ b[i] .+ σ*randn(rg, N[i])
 
         mark += N[i]
 
