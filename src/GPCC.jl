@@ -8,6 +8,8 @@ module GPCC
 
     using StatsFuns # MLBase
 
+    using ELBOfy
+
 
     include("delayedCovariance.jl")
 
@@ -26,8 +28,10 @@ module GPCC
 
     include("uniformpriordelay.jl")
 
+    include("gpccvi.jl"); export gpccvi
 
-    export simulatetwolightcurves, simulatethreelightcurves, 
+
+    export simulatetwolightcurves, simulatethreelightcurves, simulatefourlightcurves,
            gpcc, getprobabilities, uniformpriordelay
 
 
