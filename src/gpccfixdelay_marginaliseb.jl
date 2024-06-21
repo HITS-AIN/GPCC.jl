@@ -249,7 +249,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     makematrixsymmetric!(KSobsB)
 
 
-     #---------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # posterior distribution for shifts b
     #---------------------------------------------------------------------
 
