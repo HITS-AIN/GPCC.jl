@@ -141,7 +141,7 @@ function simulatedata(;σ = 0.75, seed = 1)
 
     N = [60; 50; 40; 30] # number of data items per band
 
-    t = [rand(rg, N[1])*25, [rand(rg, 25)*8; 12.0.+rand(rg, 25)*8], rand(rg, N[3])*20, rand(rg, N[4])*25]
+    t = [rand(rg, N[1])*40, rand(rg, N[2])*60, rand(rg, N[3])*70, rand(rg, N[4])*80]
 
 
     #---------------------------------------------------------------------
@@ -150,15 +150,6 @@ function simulatedata(;σ = 0.75, seed = 1)
 
     C = delayedCovariance(rbf, α, truedelays, ρ, t)  + Diagonal(σ^2*ones(sum(N)))
 
-    # let
-
-    #     U, S, V = svd(C)
-
-    #     C = U * Diagonal(max.(1e-6, abs.(S))) * U'
-
-    #     makematrixsymmetric!(C)
-
-    # end
 
 
     #---------------------------------------------------------------------
