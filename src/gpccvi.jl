@@ -1,69 +1,13 @@
-"""
-    loglikel, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false)
-
-Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
-
-Data passed to the function are organised as arrays of arrays.
-The outer array contains L number of inner arrays where L is the number of bands.
-The l-th inner arrays hold the data pertaining to the l-th band.
-See [`simulatedata`](@ref) for an example of how data are organised.
-
-Input arguments
-===============
-
-- `tarray`: Array of arrays of observation times. There are L number of inner arrays. The l-th array holds the observation times of the l-th band.
-- `yarray`: Array of arrays of fluxes. Same structure as `tarray`
-- `stdarray`: Array of error measurements. Same structure as `tarray`
-- `kernel`: Specifies GP kernel function. Options are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
-- `delays`: L-dimensional vector of delays.
-- `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
-- `seed`: Random seed controls the random sampling of initial solution.
-- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
-- `initialrandom`: Before optimisation begins, a number of random solutions are sampled and the one with the highest likelihood becomes the starting point for the optimisation.
-- `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
-- `rhomax`: maximum value for lengthscale ρ of GP.
-- `verbose`: true / false (default). If set to `true`, auxiliary messages will be printed out 
-
-
-Returned arguments
-==================
-- `loglikel`: log-likelihood reached when optimising GP hyperparameters.
-- `predict`: function for predicting on out-of-sample data.
-- `α`: coefficients by which the latent Gaussian process is scaled in each band
-- `postb`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
-- `ρ`: length scale of latent Gaussian Process
-
-# Example
-```julia-repl
-julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
-julia> loglikel, pred, α, postb, ρ = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
-julia> trange = collect(-10:0.1:25); # define time interval for predictions
-julia> μpred, σpred = pred(trange) # obtain predictions
-julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
-julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
-julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
-```
-"""
-function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρmin = 0.1, ρmax = 20.0,  verbose = true)
+function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true)
 
     #---------------------------------------------------------------------
-    # Fix random seed for reproducibility
+    # Fix random seed, get number of filters and check dimesions
     #---------------------------------------------------------------------
 
     rg = MersenneTwister(seed)
-
-
-    #---------------------------------------------------------------------
-    # Set constants
-    #---------------------------------------------------------------------
-
+    
     L = length(tarray)
-
-
-    #---------------------------------------------------------------------
-    # Check dimensions
-    #---------------------------------------------------------------------
-
+    
     @assert(L == length(yarray) == length(tarray) == length(stdarray))
 
 
@@ -77,45 +21,33 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
 
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
-
-    μb = map(mean, yarray)             # prior mean
-
-    Σb = 100 * diagm(map(var, yarray)) # inflated prior covariance
-
-    B  = Q * Σb * Q'
-
-    b̄  = Q * μb
-
-
-    #---------------------------------------------------------------------
-    # Let user know what is being run
-    #---------------------------------------------------------------------
-
     
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    f(x) = [softplus.(x[1:2L-1]);    transformbetween(x[2L], ρmin, ρmax)]
+    f(x) = [   softplus.(x[1:1L]); x[1L+1:2L];    softplus.(x[2L+1:(3L-1)])]
     
-    g(x) = [invsoftplus.(x[1:2L-1]); invtransformbetween(x[2L], ρmin, ρmax)]
+    g(x) = [invsoftplus.(x[1:1L]); x[1L+1:2L]; invsoftplus.(x[2L+1:(3L-1)])]
     
-  
+
     #---------------------------------------------------------------------
-    # Handle parameter vector
+    # Split parameter vector into arguments
     #---------------------------------------------------------------------
   
     function unpack(param)
 
-        @assert(length(param) == 2L)
+        @assert(length(param) == 3L-1)
 
-        local α =    (param[0L+1:1L])
+        local α = param[0L+1:1L]
 
-        local τ = [0;(param[1L+1:2L-1])]
+        local b = param[1L+1:2L]
 
-        local ρ = param[2L]
+        local τ = [0; cumsum(param[2L+1:3L-1])]
 
-        return α, τ, ρ
+        # local ρ = param[3L]
+
+        return α, b, τ, ρfixed
 
     end
 
@@ -124,25 +56,70 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, τ, ρ)
+    function objective(α, b, τ, ρ)
 
-        local K = Symmetric(delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs + B)
+        local K = Symmetric(delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs)
 
-        return logpdf(MvNormal(b̄, K), Y) 
+        return logpdf(MvNormal(Q*b, K), Y)
 
     end
     
     helper(p) = objective(unpack(p)...)
+    
+    elbo = elbofy(3L-1, (3L -1)* 50, helper, transform = f, invtransform = g) # take 50 samples per dimension/parameter
 
-    elbo = elbofy(2L, 500, helper, transform = f)
+    verbose ? display(elbo) : nothing
 
-    elbohelper(x) = -elbo(x)
+    # get point estimate to start VI
+
+    μ₀ = let
+
+        verbose ? @printf("Initialising variational inference.\n") : nothing
+
+        local opt = Optim.Options(show_trace = true, iterations = 3_000, show_every = 25)
+
+        local aux(x) = -helper(f(x))
+
+        optimize(aux, 1*randn(rg, 3L-1), NelderMead(), opt).minimizer
+     
+    end
+
+    
+    # setup progress bar 
+
+    pr = Progress(iterations; showspeed=true, enabled = verbose)
+    
+    callback(st::OptimizationState) = (next!(pr; showvalues = [(:negative_elbo, st.value)]); false)
+    
+
+    # setup optimisation options for variational inference
+
+    opt = Optim.Options(show_trace = true, iterations = iterations, show_every=1)# callback = callback)
 
 
-    opt = Optim.Options(show_trace = true, iterations = iterations, show_every = 2)
+    # initial covariance root is spherical, radius is optimised below in one-dimensional optimisation problem
 
-    θ = optimize(elbohelper, [0.01*randn(rg, 2L); 0.1*ones(2L)], NelderMead(), opt).minimizer
+    Cdiag = let
 
-    MvNormal(θ[1:2L], θ[2L+1:end]), helper, f, g
+        verbose ? @printf("Initialising covariance.\n") : nothing
+
+        local r_range = 0.1:0.1:1.0
+        
+        local bestindex = argmax([elbo(μ₀, r * ones(3L-1)) for r in r_range])
+   
+        @printf("Best r is %f\n", r_range[bestindex])
+
+        r_range[bestindex] * ones(3L-1) 
+
+    end
+
+    # optimise elbo and get optimal variational parameters
+   
+    θ = optimize(x -> -elbo(x), [μ₀; Cdiag], NelderMead(), opt).minimizer
+    
+
+    # return approximate posterior
+    
+    transformedgaussianposterior(elbo, θ)
     
 end
