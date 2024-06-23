@@ -2,13 +2,13 @@ module GPCC
 
     using PyPlot, BlockArrays, Random
 
-    using Optim, Distributions, LinearAlgebra, StatsFuns
+    using Optim, Distributions, LinearAlgebra
 
-    using Printf, MiscUtil #, Suppressor
+    using Printf, MiscUtil
+    
+    using StatsFuns
 
-    using StatsFuns # MLBase
-
-    using ELBOfy
+    using ELBOfy, ProgressMeter
 
 
     include("delayedCovariance.jl")
@@ -17,22 +17,21 @@ module GPCC
 
     include("util.jl")
 
-
-    # include("UNUSED/gpccvi.jl")
-
     include("gpccfixdelay_marginaliseb.jl")
-
-    # include("performcv.jl")
 
     include("getprobabilities.jl")
 
     include("uniformpriordelay.jl")
 
-    include("gpccvi.jl"); export gpccvi
+    include("gpccvi.jl") 
+
+    include("intersection.jl"); export noisyintersection
+
+    include("infercommonlengthscale.jl"); export infercommonlengthscale
 
 
     export simulatetwolightcurves, simulatethreelightcurves, simulatefourlightcurves,
-           gpcc, getprobabilities, uniformpriordelay
+           gpcc, getprobabilities, uniformpriordelay, gpccvi
 
 
 end
