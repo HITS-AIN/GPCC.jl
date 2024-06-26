@@ -70,7 +70,10 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
 
     verbose ? display(elbo) : nothing
 
+
+    #-------------------------------------------------------
     # get point estimate to start VI
+    #-------------------------------------------------------
 
     μ₀ = let
 
@@ -85,41 +88,97 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     end
 
     
-    # setup progress bar 
+    # # setup progress bar 
 
-    pr = Progress(iterations; showspeed=true, enabled = verbose)
+    # pr = Progress(iterations; showspeed=true, enabled = verbose)
     
-    callback(st::OptimizationState) = (next!(pr; showvalues = [(:negative_elbo, st.value)]); false)
+    # callback(st::OptimizationState) = (next!(pr; showvalues = [(:negative_elbo, st.value)]); false)
     
 
-    # setup optimisation options for variational inference
-
-    opt = Optim.Options(show_trace = true, iterations = iterations, show_every=1)# callback = callback)
-
-
-    # initial covariance root is spherical, radius is optimised below in one-dimensional optimisation problem
-
+    
+    #-------------------------------------------------------
+    # initial covariance root is spherical,
+    # radius is optimised below in one-dimensional optimisation problem
+    #-------------------------------------------------------
+    
     Cdiag = let
-
+        
         verbose ? @printf("Initialising covariance.\n") : nothing
-
+        
         local r_range = 0.1:0.1:1.0
         
         local bestindex = argmax([elbo(μ₀, r * ones(3L-1)) for r in r_range])
-   
+        
         @printf("Best r is %f\n", r_range[bestindex])
-
+        
         r_range[bestindex] * ones(3L-1) 
-
+        
     end
-
+    
+    
+    #-------------------------------------------------------
     # optimise elbo and get optimal variational parameters
+    #-------------------------------------------------------
+
+    opt = Optim.Options(show_trace = true, iterations = iterations, show_every=1)# callback = callback)
    
     θ = optimize(x -> -elbo(x), [μ₀; Cdiag], NelderMead(), opt).minimizer
     
 
-    # return approximate posterior
+    #----------------------------------------------
+    # instantiate approximate posterior
+    #----------------------------------------------
+
+    q = transformedgaussianposterior(elbo, θ)
+
+
+    #----------------------------------------------
+    # Draw samples from predictive distribution
+    #----------------------------------------------
     
-    transformedgaussianposterior(elbo, θ)
+    samplepredict(ttest0::Array{T, 1}) where T<:Real = samplepredict([ttest0 for _ in 1:L])
+
+
+    function samplepredict(ttest) 
+
+        local JITTER = 1e-10
+
+        local ρ = ρfixed
+
+        local θ = rand(q)
+
+        local α, b, τ = θ[1:L], θ[L+1:2L], [0; θ[2L+1:3L-1]]
+
+
+        local K = delayedCovariance(kernel, α, τ, ρ, tarray)
+
+        local KSobsB = K + Sobs
+
+        # matrix for replicating elements
+        local Q✴ = Qmatrix(length.(ttest))
+
+        # dimensions: N × Ntest
+        local kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest)
+
+        # Ntest × Ntest
+        local cB = delayedCovariance(kernel, α, τ, ρ, ttest)
+
+        # full predictive covariance
+        local Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + JITTER*I
+
+        # predictive mean
+
+        local μpred = kB✴' * (KSobsB \ (Y - (Q*b))) + (Q✴ * b)
+
+        Ntest = length.(ttest)
     
+        # split predictions for each filter
+        local μ = [μpred[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
+        local Σ = [Σpred[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
+        
+        return [rand(MvNormal(μᵢ, Σᵢ)) for (μᵢ, Σᵢ) in zip(μ, Σ)]
+
+    end
+    
+    return q, samplepredict
 end
