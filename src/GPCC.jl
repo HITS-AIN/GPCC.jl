@@ -8,7 +8,7 @@ module GPCC
     
     using StatsFuns
 
-    using ELBOfy, ProgressMeter
+    using ELBOfy#, ProgressMeter
 
 
     include("delayedCovariance.jl")
