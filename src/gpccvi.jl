@@ -26,9 +26,9 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    f(x) = [   softplus.(x[1:1L]); x[1L+1:2L];    softplus.(x[2L+1:(3L-1)])]
+    f(x) = [   softplus.(x[1:1L]); x[1L+1:2L];    transformbetween.(x[2L+1:(3L-1)],0.0,  2.0)]
     
-    g(x) = [invsoftplus.(x[1:1L]); x[1L+1:2L]; invsoftplus.(x[2L+1:(3L-1)])]
+    g(x) = [invsoftplus.(x[1:1L]); x[1L+1:2L]; invtransformbetween.(x[2L+1:(3L-1)],0.0,  2.0)]
     
 
     #---------------------------------------------------------------------
@@ -141,42 +141,42 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
 
     function samplepredict(ttest) 
 
-        local JITTER = 1e-10
-
-        local ρ = ρfixed
-
         local θ = rand(q)
 
         local α, b, τ = θ[1:L], θ[L+1:2L], [0; θ[2L+1:3L-1]]
 
 
-        local K = delayedCovariance(kernel, α, τ, ρ, tarray)
+        local K = delayedCovariance(kernel, α, τ, ρfixed, tarray)
 
         local KSobsB = K + Sobs
 
         # matrix for replicating elements
+
         local Q✴ = Qmatrix(length.(ttest))
 
-        # dimensions: N × Ntest
-        local kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest)
+        # N × Ntest
+        
+        local kB✴ = delayedCovariance(kernel, α, τ, ρfixed, tarray, ttest)
 
         # Ntest × Ntest
-        local cB = delayedCovariance(kernel, α, τ, ρ, ttest)
+        
+        local cB = delayedCovariance(kernel, α, τ, ρfixed, ttest)
 
         # full predictive covariance
-        local Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + JITTER*I
+
+        local Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + 1e-8*I
 
         # predictive mean
 
         local μpred = kB✴' * (KSobsB \ (Y - (Q*b))) + (Q✴ * b)
 
-        Ntest = length.(ttest)
-    
-        # split predictions for each filter
-        local μ = [μpred[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
-        local Σ = [Σpred[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
-        
-        return [rand(MvNormal(μᵢ, Σᵢ)) for (μᵢ, Σᵢ) in zip(μ, Σ)]
+        # draw sample and then split it per filter
+
+        local Ntest = length.(ttest)
+
+        local sample = rand(MvNormal(μpred, Σpred))
+
+        return [sample[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
 
     end
     
