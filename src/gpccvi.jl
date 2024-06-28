@@ -1,4 +1,4 @@
-function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true)
+function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true, S = 50)
 
     #---------------------------------------------------------------------
     # Fix random seed, get number of filters and check dimesions
@@ -66,7 +66,7 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     
     helper(p) = objective(unpack(p)...)
     
-    elbo = elbofy(3L-1, (3L -1)* 50, helper, transform = f, invtransform = g) # take 50 samples per dimension/parameter
+    elbo = elbofy(3L-1, (3L -1)* S, helper, transform = f, invtransform = g) # take S samples per dimension/parameter
 
     verbose ? display(elbo) : nothing
 
