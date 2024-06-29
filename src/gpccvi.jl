@@ -88,14 +88,6 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     end
 
     
-    # # setup progress bar 
-
-    # pr = Progress(iterations; showspeed=true, enabled = verbose)
-    
-    # callback(st::OptimizationState) = (next!(pr; showvalues = [(:negative_elbo, st.value)]); false)
-    
-
-    
     #-------------------------------------------------------
     # initial covariance root is spherical,
     # radius is optimised below in one-dimensional optimisation problem
