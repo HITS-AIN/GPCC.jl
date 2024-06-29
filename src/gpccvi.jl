@@ -1,4 +1,4 @@
-function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true, S = 50)
+function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true, S = 50, τmax = 100.0)
 
     #---------------------------------------------------------------------
     # Fix random seed, get number of filters and check dimesions
@@ -26,9 +26,9 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    f(x) = [   softplus.(x[1:1L]); x[1L+1:2L];    transformbetween.(x[2L+1:(3L-1)],0.0,  2.0)]
+    f(x) = [   softplus.(x[1:1L]); x[1L+1:2L];    transformbetween.(x[2L+1:(3L-1)],0.0, τmax)]
     
-    g(x) = [invsoftplus.(x[1:1L]); x[1L+1:2L]; invtransformbetween.(x[2L+1:(3L-1)],0.0,  2.0)]
+    g(x) = [invsoftplus.(x[1:1L]); x[1L+1:2L]; invtransformbetween.(x[2L+1:(3L-1)],0.0, τmax)]
     
 
     #---------------------------------------------------------------------
@@ -44,8 +44,6 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
         local b = param[1L+1:2L]
 
         local τ = [0; cumsum(param[2L+1:3L-1])]
-
-        # local ρ = param[3L]
 
         return α, b, τ, ρfixed
 
@@ -63,6 +61,7 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
         return logpdf(MvNormal(Q*b, K), Y)
 
     end
+    
     
     helper(p) = objective(unpack(p)...)
     
