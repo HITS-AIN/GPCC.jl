@@ -180,7 +180,7 @@ plot(candidatedelays, getprobabilities(loglikel))
 
 ## ▶ Evaluating a set of candidate delays in parallel threads
 
-One can easily parallelise cross-validation on multiple cores by simply replacing `map` with `tmap` provided by the package [ThreadTools.jl](https://github.com/baggepinnen/ThreadTools.jl). 
+One can easily parallelise the posterior estimation by simply replacing `map` with `tmap` provided by the package [ThreadTools.jl](https://github.com/baggepinnen/ThreadTools.jl). 
 Package `ThreadTools.jl` needs to be independently installed. Before that, one has to make sure that multiple threads are available by starting Julia with e.g. `julia -t 4` option:
 ```
 using GPCC
