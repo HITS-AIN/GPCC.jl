@@ -6,7 +6,7 @@ module GPCC
 
     using Printf, MiscUtil
     
-    using StatsFuns
+    using StatsFuns, Distances
 
     using ELBOfy#, ProgressMeter
 
@@ -23,7 +23,7 @@ module GPCC
 
     include("uniformpriordelay.jl")
 
-    include("gpccvi.jl") 
+    include("gpccvi_b.jl") 
 
     include("intersection.jl"); export noisyintersection
 
