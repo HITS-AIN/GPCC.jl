@@ -140,7 +140,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
 
     function getsolution(i)
 
-        local opt = Optim.Options(show_trace = verbose, iterations = iterations, show_every = 2, g_tol=1e-6)
+        local opt = Optim.Options(show_trace = verbose, iterations = iterations, show_every = 100, g_tol=1e-6)
 
         local randomsolutions = [sampleunconstrainedsolution(i) for _ in 1:initialrandom]
 
