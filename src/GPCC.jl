@@ -23,7 +23,7 @@ module GPCC
 
     include("uniformpriordelay.jl")
 
-    include("gpccvi_b.jl") 
+    # include("gpccvi_b.jl") 
 
     include("intersection.jl"); export noisyintersection
 
@@ -31,7 +31,7 @@ module GPCC
 
 
     export simulatetwolightcurves, simulatethreelightcurves, simulatefourlightcurves,
-           gpcc, getprobabilities, uniformpriordelay, gpccvi
+           gpcc, getprobabilities, uniformpriordelay#, gpccvi
 
 
 end
