@@ -88,18 +88,3 @@ function Qvector(Narray, entries)
     Q
 
 end
-
-
-#---------------------------------------------------
-
-function singlegp(tobs, yobs, σobs; kernel = kernel, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
-
-    gpccfixdelay([tobs], [yobs], [σobs]; kernel = kernel, τ = [0.0], iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
-
-end
-
-#---------------------------------------------------
-
-function internalversion()
-    @printf("globalnoiseterm - optimise α, b and ρ")
-end
