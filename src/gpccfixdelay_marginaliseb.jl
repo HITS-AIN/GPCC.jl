@@ -44,17 +44,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -70,6 +70,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     JITTER = 1e-8
 
     L = length(tarray)
+
 
 
     #---------------------------------------------------------------------
@@ -92,38 +93,36 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     μb = map(mean, yarray)             # prior mean
 
-    Σb = 100 * diagm(map(var, yarray)) # inflated prior covariance
+    Σb = 10 * diagm(map(var, yarray)) # inflated prior covariance
 
     B  = Q * Σb * Q'
 
     b̄  = Q * μb
 
+    SobsB = Sobs + B
+
+
     #---------------------------------------------------------------------
     # Let user know what is being run
     #---------------------------------------------------------------------
 
-    if verbose 
-        informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                    initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
-    end
+    # if verbose 
+    #     informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
+    #                 initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
+    # end
 
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    makeα(x) = makepositive(x) + 1e-8
-
-    makeρ(x) = transformbetween(x, ρmin, ρmax)
-
     function unpack(param)
 
-        @assert(length(param) == L + 1)
+        @assert(length(param) == L)
 
-        local α = makeα.(param[1:1L])
+        local α = exp.(param) # if we ever use another function  than exp,
+                              # then the log-normal distribution below is no longer valid
 
-        local ρ = makeρ(param[L+1])
-
-        return α, ρ
+        return α
 
     end
 
@@ -132,59 +131,40 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, ρ)
+    delayedx = reduce(vcat, [x.-d for (x, d) in zip(tarray, τ)])
 
-        local K = delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs + B
+    K₁ = covariance_unit_amplitude(kernel, ρfixed, delayedx) # stays fixed throughout!
 
-        makematrixsymmetric!(K)
+   
 
-        return logpdf(MvNormal(b̄, K), Y)
+    function objective(α) # same as one below, keep for numerical verification
+        
+        local A = Diagonal(Q*α)
+
+        return logpdf(MvNormal(b̄, Symmetric(A*K₁*A + SobsB)), Y)
 
     end
 
-    # convenient call
+    
+    function fasterobjective(α) # same as one above, but slightly faster
+        
+        local A = Diagonal(Q*α)
 
-    objective(param) = objective(unpack(param)...)
+        local C = cholesky(Symmetric(A*K₁*A + SobsB)).L
 
+        -0.5*sum(abs2.(C\(Y-b̄))) - 0.5*2*sum(log.(diag(C))) - 0.5*log(2π)*size(C,1)
+
+    end
+      
     # Define negative objective
 
-    negativeobjective(x) = - objective(x)
+    negativeobjective(x) = - fasterobjective(x)
 
     # Auxiliary objective catches exceptions
 
-    safenegativeobj = safewrapper(negativeobjective)
+    safenegativeobj = negativeobjective#safewrapper(negativeobjective) ❗❗❗❗❗❗❗❗❗❗
 
 
-    #---------------------------------------------------------------------
-    # Define initial values for lengthscale ρ
-    #---------------------------------------------------------------------
-
-    initialρvalues = let
-
-        if numberofrestarts == 1 || numberofrestarts == 2
-
-            # pick initial ρ values randomly
-
-            rand(rg, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofrestarts)
-
-        else
-
-            # initial ρ values on grid
-
-            collect(MiscUtil.logrange(ρmin + 1e-3, ρmax - 1e-3, numberofrestarts))
-
-        end
-
-    end
-
-
-    if verbose 
-        
-        @printf("\n\tInitial ρ values are:\n")
-
-        map(x -> @printf("\t%f\n", x), initialρvalues)
-
-    end
 
 
     #---------------------------------------------------------------------
@@ -198,19 +178,18 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
-    sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
-                                      invtransformbetween(initialρvalues[i], ρmin, ρmax)]
+    sampleunconstrainedsolution() = invmakepositive.(sampleα())
 
 
     #---------------------------------------------------------------------
     # Function below calls optimiser
     #---------------------------------------------------------------------
 
-    function getsolution(i)
+    function getsolution()
 
         local opt = Optim.Options(show_trace = false, iterations = iterations, show_every = 2, g_tol=1e-6)
 
-        local randomsolutions = [sampleunconstrainedsolution(i) for _ in 1:initialrandom]
+        local randomsolutions = [sampleunconstrainedsolution() for _ in 1:initialrandom]
 
         local bestindex = argmin(map(safenegativeobj, randomsolutions))
 
@@ -225,7 +204,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Restart optimisation multiple times as specified in `numberofrestarts`
     #---------------------------------------------------------------------
 
-    allresults = [getsolution(i) for i in 1:numberofrestarts]
+    allresults = [getsolution() for _ in 1:numberofrestarts]
 
     result     = allresults[argmin([res.minimum for res in allresults])]
 
@@ -240,24 +219,46 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
-    α, ρ = unpack(paramopt)
+    α = unpack(paramopt)
+   
+    A = Diagonal(Qmatrix(length.(tarray))*α)
 
-    K = delayedCovariance(kernel, α, τ, ρ, tarray)
+    KSobsB = Symmetric(A*K₁*A + SobsB)
 
-    KSobsB = K + Sobs + B
 
-    makematrixsymmetric!(KSobsB)
+    #---------------------------------------------------------------------
+    # Approximate posterior distribution for scalings α via laplace.
+    # Works only if scalings contraint in logarithm in unpack function!  
+    #---------------------------------------------------------------------
+
+    qa = let
+        
+        μã = paramopt
+
+        Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
+
+        MvLogNormal(μã, inv(Hã))
+
+    end
 
 
     #---------------------------------------------------------------------
     # posterior distribution for shifts b
     #---------------------------------------------------------------------
 
-    Σpostb = (Σb\I + Q'*((Sobs + K)\Q)) \ I
+    qb = let 
+        
+        Σpostb = (Σb\I + Q'*((Sobs + A*K₁*A)\Q)) \ I
+        
+        # W = inv(Sobs) - (inv(Sobs)*A)*((K₁ + A*inv(Sobs)*A)\(A*inv(Sobs)))
+        
+        # Σpostb = inv(Σb) - inv(Σb)*
 
-    μpostb = Σpostb * ((Q' / (Sobs + K))*Y + Σb\μb)
+        μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
 
-    postb = MvNormal(μpostb, makematrixsymmetric(Σpostb))
+        MvNormal(μpostb, Symmetric(Σpostb))
+
+    end
 
 
     #---------------------------------------------------------------------
@@ -274,17 +275,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
         B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest) + B✴
+        kB✴ = delayedCovariance(kernel, α, τ, ρfixed, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(kernel, α, τ, ρ, ttest) + B✴✴
+        cB = delayedCovariance(kernel, α, τ, ρfixed, ttest) + B✴✴
 
         # full predictive covariance
-        Σpred = cB - kB✴' * (KSobsB \ kB✴)
-
-        makematrixsymmetric!(Σpred)
-
-        Σpred = Σpred + JITTER*I
+        Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + JITTER*I
 
         # predictive mean
 
@@ -356,5 +353,6 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # • prediction function
     # • optimised free parameters
 
-    -result.minimum, predictTest, (α, postb, ρ)
+    -result.minimum, predictTest, (qa, qb, ρfixed)
+    
 end
