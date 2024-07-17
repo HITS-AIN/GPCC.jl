@@ -1,17 +1,17 @@
 module GPCC
 
-    using PyPlot, BlockArrays, Random
+    using PyPlot, Random
 
-    using Optim, Distributions, LinearAlgebra
+    using Optim, Distributions, LinearAlgebra, ForwardDiff
 
     using Printf, MiscUtil
     
     using StatsFuns, Distances
 
-    using ELBOfy#, ProgressMeter
+    # using ELBOfy#, ProgressMeter
 
 
-    include("delayedCovariance.jl")
+    include("newcov.jl")
 
     include("simulatedata.jl")
 
