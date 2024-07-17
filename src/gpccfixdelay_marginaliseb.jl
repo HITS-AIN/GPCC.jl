@@ -243,18 +243,16 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
 
     #---------------------------------------------------------------------
-    # posterior distribution for shifts b
+    # conditional posterior distribution for shifts b given α
     #---------------------------------------------------------------------
 
-    qb = let 
+    function get_qb(α) 
         
-        Σpostb = (Σb\I + Q'*((Sobs + A*K₁*A)\Q)) \ I
-        
-        # W = inv(Sobs) - (inv(Sobs)*A)*((K₁ + A*inv(Sobs)*A)\(A*inv(Sobs)))
-        
-        # Σpostb = inv(Σb) - inv(Σb)*
+        local A = Diagonal(Qmatrix(length.(tarray))*α)
 
-        μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
+        local Σpostb = (inv(Σb) + Q'*((Sobs + A*K₁*A)\Q)) \ I
+        
+        local μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
 
         MvNormal(μpostb, Symmetric(Σpostb))
 
@@ -353,6 +351,6 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # • prediction function
     # • optimised free parameters
 
-    -result.minimum, predictTest, (qa, qb, ρfixed)
+    -result.minimum, predictTest, (qa, get_qb, ρfixed)
     
 end
