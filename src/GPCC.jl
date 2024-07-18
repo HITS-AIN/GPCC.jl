@@ -8,16 +8,19 @@ module GPCC
     
     using StatsFuns, Distances
 
-    # using ELBOfy#, ProgressMeter
+    using ProgressMeter
 
 
+    include("setup_problem.jl"); export setup_problem
+    
     include("newcov.jl")
 
     include("simulatedata.jl")
 
     include("util.jl")
 
-    include("gpccfixdelay_marginaliseb.jl")
+    include("gpccfixdelay_marginaliseb.jl"); 
+    include("gpccfixdelay_marginaliseb_sparse.jl"); include("inducingpoints.jl")
 
     include("getprobabilities.jl")
 
@@ -31,7 +34,7 @@ module GPCC
 
 
     export simulatetwolightcurves, simulatethreelightcurves, simulatefourlightcurves,
-           gpcc, getprobabilities, uniformpriordelay#, gpccvi
+    gpcc,gpcc_sparse, getprobabilities, uniformpriordelay#, gpccvi
 
 
 end
