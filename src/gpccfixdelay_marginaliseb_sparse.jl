@@ -99,18 +99,7 @@ function gpccfixdelay_sparse(tarray, yarray, stdarray; kernel = kernel, τ = τ,
 
     b̄  = Q * μb
 
-
-
-
-    #---------------------------------------------------------------------
-    # Let user know what is being run
-    #---------------------------------------------------------------------
-
-    # if verbose 
-    #     informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-    #                 initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
-    # end
-
+    
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
