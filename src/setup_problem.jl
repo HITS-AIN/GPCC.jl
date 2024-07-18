@@ -1,4 +1,4 @@
-function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern52, iterations = 1000, seed = 1, numberofrestarts = 10, initialrandom = 10, ρmin = 0.1, ρmax = 300.0)
+function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern32, iterations = 1_000, seed = 1, numberofrestarts = 10, initialrandom = 10, ρmin = 0.1, ρmax = 300.0)
 
     ρfixed = infercommonlengthscale(tobs, yobs, σobs; kernel = kernel, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = false)[3][3]
 
@@ -10,16 +10,23 @@ function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern52, iterations = 1
 
     function helper(delay::Vector{T}...) where T<:Real
   
-        @showprogress tmap(x->helper(x...), Iterators.product(delay...));
+        @showprogress tmap1(x->helper(x...), Iterators.product(delay...));
 
     end
 
     L = length(tobs)
 
-    function helper(delay::Vector{T}) where T<:Real
+    function helper(delays::Vector{T}) where T<:Real
   
-        helper(ntuple(i -> delay, L-1)...)
+        if L == 2
 
+            @showprogress tmap1(x -> helper(x), delays)
+
+        else
+
+            helper(ntuple(i -> delays, L-1)...)
+
+        end
     end
 
 end
