@@ -95,8 +95,8 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 
 ## ▶ How to estimate delays
-
-We repeat the simulation of the data:
+Start Julia with multiple threads.
+We simulate some data:
 ```
 using GPCC, LinearAlgebrea, ThreadPinning
 BLAS.set_num_threads(1)
