@@ -1,27 +1,14 @@
 function inducingpoints(x; dx = dx)
 
-    z = Float64[]
-
     xsorted = sort(x)
 
-    for xᵢ in xsorted
+    # return xsorted[1]:dx:xsorted[end]
 
-        if isempty(z)
+    close_enough(g) = minimum(abs.(g .- xsorted)) < dx
+    
+    grid = xsorted[1]:dx:xsorted[end]
 
-            push!(z, xᵢ)
-
-            continue
-
-        end
-
-        if abs(xᵢ-z[end]) > dx
-
-            push!(z, xᵢ)
-
-        end
-
-    end
-
-    return z
+    filter(close_enough, grid)
 
 end
+    
