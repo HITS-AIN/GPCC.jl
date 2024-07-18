@@ -95,7 +95,6 @@ function gpccfixdelay_sparse(tarray, yarray, stdarray; kernel = kernel, τ = τ,
 
     Σb = 10 * Diagonal(map(var, yarray)) # inflated prior covariance
 
-    B  = Q * Σb * Q'
 
     b̄  = Q * μb
 
@@ -124,61 +123,73 @@ function gpccfixdelay_sparse(tarray, yarray, stdarray; kernel = kernel, τ = τ,
 
     z = inducingpoints(delayedx; dx = dx)
 
-    @show size(z)
+    # @show size(z)
 
     Km  = covariance_unit_amplitude(kernel, ρfixed, z) +JITTER*I# stays fixed throughout!
+
     Knm = covariance_unit_amplitude(kernel, ρfixed, delayedx, z) 
 
     K̃diag = ones(length(delayedx)) - diag(Knm*(Km\Knm'))
    
 
-    W = Sobs + B
+    W⁻¹, logdetW = let
+        
+        local Sobs⁻¹ = inv(Sobs) 
 
-    W⁻¹ = inv(W) # ❗ should use woodbury for stability
+        local middle_term = inv(Σb) + Q'*Sobs⁻¹*Q
 
-    function objective(α) # same as one below, keep for numerical verification
+        local result1 = Sobs⁻¹ - Sobs⁻¹*Q*((middle_term)\(Q'*Sobs⁻¹))
+
+        local result2 = logdet(Sobs) + logdet(Σb) + logdet(middle_term)
+
+        result1, result2
+
+    end
+
+    logdetKm = logdet(Km)
+
+
+    trace_contribution =  - 0.5*sum(Sobs.diag .* K̃diag)
+
+    # function objective(α)
+
+    #     local A = Diagonal(Q*α)
+
+    #     local U = A*Knm
+
+    #     local R = Symmetric((U*(Km\U') + W))
+
+    #     logpdf(MvNormal(b̄, R), Y) + trace_contribution
+        
+    # end
+
+    function fasterobjective(α)
         
         local A = Diagonal(Q*α)
 
         local U = A*Knm
+        
+        local C = cholesky(Symmetric(Km + U'*W⁻¹*U)).L
+        
+        local F = C\(U'*W⁻¹)
 
-        local R⁻¹ = let
-            
-            local C = cholesky(Symmetric(Km + U'*W⁻¹*U)).L
-            
-            local F = C\(U'*W⁻¹)
-            
-            W⁻¹ - F'F
-            
-        end
+        local R⁻¹ = W⁻¹ - F'*F
+
+        local logdetR = logdetW + 2sum(log.(diag(C))) - logdetKm
 
         local diff = Y-b̄
-        
-        local logl = -0.5*length(Y)*log(2π) - 0.5*dot(diff, R⁻¹*diff) + 0.5*logdet(R⁻¹)
-        
-        # local R = Symmetric((U*(Km\U') + W))
-        # a=logpdf(MvNormal(b̄, R), Y)
-        
 
-        # @show a-logl
-        logl - 0.5*sum(Sobs.diag .* K̃diag) # even though last term is constant, it is important when comparing to other delays
+        (-0.5*length(Y)*log(2π) - 0.5*dot(diff, R⁻¹*(diff)) - 0.5*logdetR) + trace_contribution
+       
+        # even though last term is constant, it is important when comparing to other delays
  
     end
+    
 
     
-    # function fasterobjective(α) # same as one above, but slightly faster
-        
-    #     local A = Diagonal(Q*α)
-
-    #     local C = cholesky(Symmetric(A*K₁*A + SobsB)).L
-
-    #     -0.5*sum(abs2.(C\(Y-b̄))) - 0.5*2*sum(log.(diag(C))) - 0.5*log(2π)*size(C,1)
-
-    # end
-      
     # Define negative objective
 
-    negativeobjective(x) = - objective(x)
+    negativeobjective(x) = - fasterobjective(x)
 
     # Auxiliary objective catches exceptions
 
