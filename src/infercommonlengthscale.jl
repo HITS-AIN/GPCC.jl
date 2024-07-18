@@ -157,7 +157,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # Restart optimisation multiple times as specified in `numberofrestarts`
     #---------------------------------------------------------------------
 
-    allresults = [getsolution(i) for i in 1:numberofrestarts]
+    allresults = @showprogress "optimising length scale" [getsolution(i) for i in 1:numberofrestarts]
 
     result     = allresults[argmin([res.minimum for res in allresults])]
 
