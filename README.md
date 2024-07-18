@@ -144,6 +144,7 @@ let # WARMUP - Julia precompiles code
 
   tobs, yobs, σobs, truedelays = simulatetwolightcurves()
   candidatedelays = LinRange(0.0,4.0,3)
+  h = setup_problem(tobs, yobs, σobs);
   h(candidatedelays)
 
 end
