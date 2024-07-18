@@ -228,7 +228,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     #---------------------------------------------------------------------
     # Approximate posterior distribution for scalings α via laplace.
-    # Works only if scalings contraint in logarithm in unpack function!  
+    # Works only if log-parametrisation used in unpack function!  
     #---------------------------------------------------------------------
 
     qa = let
