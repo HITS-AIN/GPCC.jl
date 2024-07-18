@@ -88,6 +88,14 @@ figure()
 errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 ```
 
+## ▶ An important note about performance
+
+The package supports the parallel evaluation of candidate delays.
+To that end, start julia with multiple threads. For instance, you can start julia with 8 threads using `julia -t8`.
+We recommend to use as many threads as physical cores.
+
+To get the most performance, please read this note [here](https://carstenbauer.github.io/ThreadPinning.jl/dev/explanations/blas/) concerning issues when running multithreaded code that makes use of BLAS calls.
+
 ## ▶ How to estimate delays
 
 Having generated the simulated data, we will now estimate the delays. To that end we use the function `setup_problem`:
