@@ -8,8 +8,11 @@ module GPCC
     
     using StatsFuns, Distances
 
-    using ProgressMeter
+    using ProgressMeter, ThreadTools
 
+    
+
+    ProgressMeter.ncalls(::typeof(tmap1), ::Function, args...) = ProgressMeter.ncalls_map(args...)
 
     include("setup_problem.jl"); export setup_problem
     
