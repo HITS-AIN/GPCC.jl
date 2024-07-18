@@ -101,6 +101,12 @@ candidatedelays = LinRange(0.0,4.0,100)
 loglikel = h(candidatedelays)
 ```
 
+Plot results:
+```
+using PyPlot # must be indepedently installed
+plot(candidatedelays, getprobabilities(loglikel))
+```
+
 
 
 
