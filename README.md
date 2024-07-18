@@ -88,6 +88,20 @@ figure()
 errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 ```
 
+## ▶ How to estimate delays
+
+Having generated the simulated data, we will now estimate the delays. To that end we use the function `setup_problem`:
+```
+h = setup_problem(tobs, yobs, σobs)
+```
+Function `h` takes as an argument a candidate delay and returns the corresponding likelihood.
+Alternatively, it can be evaluated on a number of delays:
+```
+candidatedelays = LinRange(0.0,4.0,100)
+loglikel = h(candidatedelays)
+```
+
+
 
 
 ## ▶ How to fit a dataset with `gpcc`
