@@ -29,4 +29,10 @@ function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern32, iterations = 1
         end
     end
 
+    function helper(delays::AbstractRange{T}) where T<:Real
+    
+        @showprogress tmap1(x -> helper(x), delays)
+
+    end
+
 end
