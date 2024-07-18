@@ -96,6 +96,15 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 ## ▶ How to estimate delays
 
+We repeat the simulation of the data:
+```
+using GPCC, LinearAlgebrea, ThreadPinning
+BLAS.set_num_threads(1)
+pinthreads(:cores) 
+
+tobs, yobs, σobs, truedelays = simulatetwolightcurves()
+```
+
 Having generated the simulated data, we will now estimate the delays. To that end we use the function `setup_problem`:
 ```
 h = setup_problem(tobs, yobs, σobs)
