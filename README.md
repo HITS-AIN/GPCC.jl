@@ -95,6 +95,7 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 
 ## ▶ How to estimate delays
+
 Start Julia with multiple threads.
 We simulate some data:
 ```
@@ -127,6 +128,35 @@ using PyPlot # must be indepedently installed
 plot(candidatedelays, getprobabilities(loglikel))
 ```
 
+## ▶ Estimate delays for real datasets
+
+In the following script, we estimate the delays for a number of objects where two light curves are available.
+After stating Julia with multiple threads, we execute the following script:
+```
+using GPCC, LinearAlgebra, ThreadPinning
+BLAS.set_num_threads(1)
+pinthreads(:cores)
+
+using GPCCData # needs to be indepedently installed, provides access to real data
+using PyPlot # needs to be indepedently installed
+
+let # WARMUP - Julia precompiles code
+
+  tobs, yobs, σobs, truedelays = simulatetwolightcurves()
+  candidatedelays = LinRange(0.0,4.0,3)
+  h(candidatedelays)
+
+end
+
+for i in 1:5
+       tobs, yobs, σobs, lambda, = readdataset(source = listdatasets()[i]);
+       h = setup_problem(tobs, yobs, σobs);
+       loglikel = h(candidatedelays)
+       plot(candidatedelays, getprobabilities(loglikel),label=listdatasets()[i])
+end
+
+legend()
+```
 
 
 
