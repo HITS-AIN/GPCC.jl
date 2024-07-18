@@ -149,6 +149,8 @@ let # WARMUP - Julia precompiles code
 
 end
 
+candidatedelays = collect(0.0:0.1:60.0)
+
 for i in 1:5
        tobs, yobs, σobs, lambda, = readdataset(source = listdatasets()[i]);
        h = setup_problem(tobs, yobs, σobs);
