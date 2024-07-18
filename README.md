@@ -110,6 +110,11 @@ Having generated the simulated data, we will now estimate the delays. To that en
 h = setup_problem(tobs, yobs, σobs)
 ```
 Function `h` takes as an argument a candidate delay and returns the corresponding likelihood.
+For example:
+```
+h(1.5) # what is the likelihood of delay 1.5 days?
+```
+
 Alternatively, it can be evaluated on a number of delays:
 ```
 candidatedelays = LinRange(0.0,4.0,100)
