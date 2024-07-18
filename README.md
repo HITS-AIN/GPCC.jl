@@ -34,8 +34,9 @@ add GPCC
 ```
 
 The package exposes the following functions of interest to the user: 
-- `gpcc`
+- `setup_problem`,
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
+- `gpcc`,
 - `getprobabilities`
 - `uniformpriordelay`.
 
