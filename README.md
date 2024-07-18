@@ -131,6 +131,7 @@ plot(candidatedelays, getprobabilities(loglikel))
 ## ▶ Estimate delays for real datasets
 
 In the following script, we estimate the delays for a number of objects where two light curves are available.
+The real data are provided in the package [GPCCData.jl](https://github.com/HITS-AIN/GPCCData.jl).
 After stating Julia with multiple threads, we execute the following script:
 ```
 using GPCC, LinearAlgebra, ThreadPinning
