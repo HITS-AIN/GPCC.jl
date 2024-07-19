@@ -1,4 +1,4 @@
-function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern32, iterations = 1_000, numberofrestarts = 10, initialrandom = 10, ρmin = 0.1, ρmax = 300.0, rng = AbstractRNG=Random.GLOBAL_RNG)
+function setup_problem(tobs, yobs, σobs; kernel = kernel, iterations = 1_000, numberofrestarts = 10, initialrandom = 10, ρmin = 0.1, ρmax = 300.0, rng = AbstractRNG=Random.GLOBAL_RNG)
 
     L = length(tobs)
 
