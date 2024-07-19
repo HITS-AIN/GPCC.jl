@@ -44,24 +44,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed)
-
-    #---------------------------------------------------------------------
-    # Fix random seed for reproducibility
-    #---------------------------------------------------------------------
-
-    rg = MersenneTwister(seed)
-
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed)
 
     #---------------------------------------------------------------------
     # Set constants
@@ -171,7 +164,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    sampleα() = map(var, yarray)  .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+    sampleα() = map(var, yarray)  .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
 
 
     #---------------------------------------------------------------------
@@ -232,12 +225,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     #---------------------------------------------------------------------
 
     qa = let
-        
-        μã = paramopt
+        0
+        # μã = paramopt
 
-        Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
+        # Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
 
-        MvLogNormal(μã, inv(Hã))
+        # MvLogNormal(μã, inv(Hã))
 
     end
 

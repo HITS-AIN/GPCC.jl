@@ -1,11 +1,4 @@
-function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose)
-
-    #---------------------------------------------------------------------
-    # Fix random seed for reproducibility
-    #---------------------------------------------------------------------
-
-    rg = MersenneTwister(seed)
-
+function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose)
 
     #---------------------------------------------------------------------
     # Set constants
@@ -95,7 +88,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
 
             # pick initial ρ values randomly
 
-            rand(rg, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofrestarts)
+            rand(rng, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofrestarts)
 
         else
 
@@ -121,9 +114,9 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    sampleα() = map(var, yarray)  .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+    sampleα() = map(var, yarray)  .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
 
-    sampleb() = map(mean, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+    sampleb() = map(mean, yarray) .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
 
 
     #---------------------------------------------------------------------
