@@ -1,5 +1,7 @@
 function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern32, iterations = 1_000, seed = 1, numberofrestarts = 10, initialrandom = 10, ρmin = 0.1, ρmax = 300.0)
 
+    L = length(tobs)
+    
     ρfixed = infercommonlengthscale(tobs, yobs, σobs; kernel = kernel, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = false)[3][3]
 
     function helper(delay::T...) where T<:Real
@@ -14,7 +16,6 @@ function setup_problem(tobs, yobs, σobs; kernel = GPCC.matern32, iterations = 1
 
     end
 
-    L = length(tobs)
 
     function helper(delays::Vector{T}) where T<:Real
   
