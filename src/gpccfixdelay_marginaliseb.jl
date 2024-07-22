@@ -44,23 +44,21 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed, JITTER = JITTER)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed, JITTER = 1e-8)
 
     #---------------------------------------------------------------------
     # Set constants
     #---------------------------------------------------------------------
-
-    JITTER = 1e-8
 
     L = length(tarray)
 
@@ -126,7 +124,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     delayedx = reduce(vcat, [x.-d for (x, d) in zip(tarray, τ)])
 
-    K₁ = covariance_unit_amplitude(kernel, ρfixed, delayedx) # stays fixed throughout!
+    K₁ = covariance_unit_amplitude(kernel, ρfixed, delayedx) + JITTER*I# stays fixed throughout!
 
    
 
@@ -225,12 +223,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     #---------------------------------------------------------------------
 
     qa = let
-        0
-        # μã = paramopt
+        
+        μã = paramopt
 
-        # Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
+        Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
 
-        # MvLogNormal(μã, inv(Hã))
+        MvLogNormal(μã, inv(Hã))
 
     end
 
@@ -344,6 +342,6 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # • prediction function
     # • optimised free parameters
 
-    -result.minimum, predictTest, (qa, get_qb, ρfixed)
+    return -result.minimum#, predictTest, (qa, get_qb, ρfixed)
     
 end
