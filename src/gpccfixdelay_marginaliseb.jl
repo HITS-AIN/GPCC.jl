@@ -82,9 +82,16 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
 
+    # Σα = Diagonal(10 * ones(L)) # this prior requires more thinking❗
+    
+    # μα = map(var, yarray)
+
+    # priorα = MvLogNormal(μα, Σα)
+
+
     μb = map(mean, yarray)             # prior mean
 
-    Σb = 10 * diagm(map(var, yarray)) # inflated prior covariance
+    Σb = 100 * Diagonal(map(var, yarray)) # inflated prior covariance
 
     B  = Q * Σb * Q'
 
@@ -112,6 +119,8 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
         local α = exp.(param) # if we ever use another function  than exp,
                               # then the log-normal distribution below is no longer valid
+                              # Changing this would also affect the prior above
+                              # Changing this would also affect sampleunconstrainedsolution below
 
         return α
 
@@ -162,14 +171,14 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    sampleα() = map(var, yarray)  .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
+    sampleα() = map(std, yarray)  .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
 
 
     #---------------------------------------------------------------------
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
-    sampleunconstrainedsolution() = invmakepositive.(sampleα())
+    sampleunconstrainedsolution() = log.(sampleα())
 
 
     #---------------------------------------------------------------------
@@ -223,12 +232,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     #---------------------------------------------------------------------
 
     qa = let
-        
-        μã = paramopt
+        0
+        # μã = paramopt
 
-        Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
+        # Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
 
-        MvLogNormal(μã, inv(Hã))
+        # MvLogNormal(μã, inv(Hã))
 
     end
 
