@@ -44,7 +44,7 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
 
     # Same function as below, but easier name for user to call
 
@@ -57,16 +57,10 @@ end
 function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed, JITTER = 1e-8)
 
     #---------------------------------------------------------------------
-    # Set constants
-    #---------------------------------------------------------------------
-
-    L = length(tarray)
-
-
-
-    #---------------------------------------------------------------------
     # Check dimensions
     #---------------------------------------------------------------------
+
+    L = length(tarray) # number of lightcurves / bands / filters
 
     @assert(L == length(τ) == length(yarray) == length(tarray) == length(stdarray))
 
@@ -82,35 +76,21 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
 
-    # Σα = Diagonal(10 * ones(L)) # this prior requires more thinking❗
-    
-    # μα = map(var, yarray)
+    # Prior for shift vector b
 
-    # priorα = MvLogNormal(μα, Σα)
-
-
-    μb = map(mean, yarray)             # prior mean
+    μb = map(mean, yarray)
 
     Σb = 100 * Diagonal(map(var, yarray)) # inflated prior covariance
 
-    B  = Q * Σb * Q'
+    B  = Q * Σb * Q' # prior cov after replicating to match number of observations
 
-    b̄  = Q * μb
+    b̄  = Q * μb # prior mean after replicating to match number of observations
 
-    SobsB = Sobs + B
+    SobsB = Sobs + B # Additional covariance structure to be added on GP covariance
 
-
-    #---------------------------------------------------------------------
-    # Let user know what is being run
-    #---------------------------------------------------------------------
-
-    # if verbose 
-    #     informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-    #                 initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = Σb)
-    # end
 
     #---------------------------------------------------------------------
-    # Functions for constraining parameters
+    # Function for constraining parameters
     #---------------------------------------------------------------------
 
     function unpack(param)
@@ -136,7 +116,6 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     K₁ = covariance_unit_amplitude(kernel, ρfixed, delayedx) + JITTER*I# stays fixed throughout!
 
    
-
     function objective(α) # same as one below, keep for numerical verification
         
         local A = Diagonal(Q*α)
@@ -160,25 +139,12 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     negativeobjective(x) = - fasterobjective(x)
 
-    # Auxiliary objective catches exceptions
-
-    safenegativeobj = negativeobjective#safewrapper(negativeobjective) ❗❗❗❗❗❗❗❗❗❗
-
-
-
 
     #---------------------------------------------------------------------
-    # Returns random values for initial scaling vector α and shift vector v
+    # Returns random unconstrained values for initial scaling vector α
     #---------------------------------------------------------------------
 
-    sampleα() = map(std, yarray)  .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
-
-
-    #---------------------------------------------------------------------
-    # Returns random unconstrained solution
-    #---------------------------------------------------------------------
-
-    sampleunconstrainedsolution() = log.(sampleα())
+    sampleunconstrainedsolution() = map(std, yarray)  .* randn(rng, L)
 
 
     #---------------------------------------------------------------------
@@ -191,11 +157,9 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
         local randomsolutions = [sampleunconstrainedsolution() for _ in 1:initialrandom]
 
-        local bestindex = argmin(map(safenegativeobj, randomsolutions))
+        local bestindex = argmin(map(negativeobjective, randomsolutions))
 
-        local finalresult = optimize(safenegativeobj,randomsolutions[bestindex], NelderMead(), opt)
-
-        return finalresult
+        optimize(negativeobjective, randomsolutions[bestindex], NelderMead(), opt)
 
     end
 
@@ -210,9 +174,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     paramopt   = result.minimizer
 
-    if verbose
-        @printf("\n\tOverall minimum is %f\n", result.minimum)
-    end
+    verbose ? @printf("\n\tOverall minimum is %f\n", result.minimum) : nothing
 
 
     #---------------------------------------------------------------------
@@ -224,39 +186,15 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     A = Diagonal(Qmatrix(length.(tarray))*α)
 
     KSobsB = Symmetric(A*K₁*A + SobsB)
-
-
-    #---------------------------------------------------------------------
-    # Approximate posterior distribution for scalings α via laplace.
-    # Works only if log-parametrisation used in unpack function!  
-    #---------------------------------------------------------------------
-
-    qa = let
-        0
-        # μã = paramopt
-
-        # Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
-
-        # MvLogNormal(μã, inv(Hã))
-
-    end
-
+  
 
     #---------------------------------------------------------------------
-    # conditional posterior distribution for shifts b given α
+    # posterior distribution for shifts b given α
     #---------------------------------------------------------------------
 
-    function get_qb(α) 
-        
-        local A = Diagonal(Qmatrix(length.(tarray))*α)
-
-        local Σpostb = (inv(Σb) + Q'*((Sobs + A*K₁*A)\Q)) \ I
-        
-        local μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
-
-        MvNormal(μpostb, Symmetric(Σpostb))
-
-    end
+    local Σpostb = Symmetric((inv(Σb) + Q'*((Sobs + A*K₁*A)\Q)) \ I)
+    
+    local μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
 
 
     #---------------------------------------------------------------------
@@ -351,6 +289,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # • prediction function
     # • optimised free parameters
 
-    return -result.minimum#, predictTest, (qa, get_qb, ρfixed)
+    return GPCCResult(-result.minimum, α, μpostb, Σpostb, τ, ρfixed)
+    return -result.minimum #, predictTest, (qa, get_qb, ρfixed)
     
 end
