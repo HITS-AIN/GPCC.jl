@@ -44,17 +44,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
 
     # Same function as below, but easier name for user to call
 
-    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed, JITTER = JITTER)
+    gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, verbose = verbose, ρfixed = ρfixed, JITTER = JITTER)
 
 
 end
 
 
-function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed, JITTER = 1e-8)
+function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, verbose = verbose, ρfixed = ρfixed, JITTER = 1e-8)
 
     #---------------------------------------------------------------------
     # Check dimensions
@@ -189,12 +189,35 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
   
 
     #---------------------------------------------------------------------
-    # posterior distribution for shifts b given α
+    # calculate in numerical stable posterior distribution for shifts b
     #---------------------------------------------------------------------
 
-    local Σpostb = Symmetric((inv(Σb) + Q'*((Sobs + A*K₁*A)\Q)) \ I)
     
-    local μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
+    μpostb, Σpostb = let
+        
+        # We need to calculate  
+        # Σpost = (Σb⁻¹ + Qᵀ(Sobs + AKA)⁻¹Q)⁻¹
+        # and
+        # μpost = Σpost{Qᵀ(Sobs + AKA)⁻¹Y + Σb⁻¹μb}
+
+        # Naive calculation reads:
+        # Symmetric((inv(Σb) + Q'*((Sobs + A*K₁*A)\Q)) \ I)
+
+      
+        # Take care of middle term, calculate its inverse using cholesky:
+        local C = cholesky(Symmetric(A*K₁*A + Sobs + Q*Σb*Q')).L
+
+        # part of woodbury
+        local F = (C\Q)*Σb
+        
+        # this comes from woodbury
+        local Σposterior = Symmetric(Σb - F'F)
+
+        local μposterior = Σposterior*((C\Q)'*(C\Y) + Σb\μb)
+
+        μposterior, Σposterior
+
+    end
 
 
     #---------------------------------------------------------------------
@@ -257,9 +280,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
         local Sobs✴ = Diagonal(reduce(vcat, σtest).^2)
 
-        Σpred = Σpred + Sobs✴
-
-        makematrixsymmetric!(Σpred)
+        Σpred = Symmetric(Σpred + Sobs✴)
 
         try
 
@@ -284,12 +305,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     end
 
 
-    # return:
-    # • function value returned from optimisation
-    # • prediction function
-    # • optimised free parameters
-
-    return GPCCResult(-result.minimum, α, μpostb, Σpostb, τ, ρfixed)
-    return -result.minimum #, predictTest, (qa, get_qb, ρfixed)
+    return -result.minimum, α, MvNormal(μpostb, Σpostb), predictTest
+    
     
 end
