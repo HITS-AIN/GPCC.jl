@@ -1,11 +1,11 @@
-function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
+function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
 
-    gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, JITTER = JITTER)[3][3]
+    gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, JITTER = JITTER)[4]
 
 
 end
 
-function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
+function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
 
     #---------------------------------------------------------------------
     # Set constants
@@ -22,7 +22,7 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
 
     μb  = map(mean, yarray)
 
-    σ²b = 100 * Diagonal(map(var, yarray)) # inflated prior variance
+    σ²b = 10 * Diagonal(map(var, yarray)) # inflated prior variance
 
     B  = [σ²b[l]*𝟏[l]*𝟏[l]' for l in 1:L] # prior cov after replicating to match number of observations
 
@@ -195,16 +195,16 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
         B✴✴ = σ²b[l] * 𝟏✴*𝟏✴'
 
         # dimensions: N × Ntest
-        kB✴ = covmatrix(tarray[l], ttest, α[l], ρ) + B✴
+        K✴ = covmatrix(tarray[l], ttest, α[l], ρ) + B✴
 
         # Ntest × Ntest
-        cB  = covmatrix(ttest, ttest, α[l], ρ) + B✴✴
+        K✴✴  = covmatrix(ttest, ttest, α[l], ρ) + B✴✴
 
-        # full predictive covariance
-        Σpred = Symmetric(cB - kB✴' * (K[l] \ kB✴))
+        # full predictive covariance - see 2.26 in RW
+        Σpred = Symmetric(K✴✴ - K✴' * (K[l] \ K✴))
 
-        # predictive mean
-        μpred = kB✴' * (K[l] \ (yarray[l] .- μb[l])) .+ μb[l]
+        # predictive mean - see 2.25, 2.38 and 2.41 in RW
+        μpred = K✴' * (K[l] \ (yarray[l] .- μb[l])) .+ μb[l]
 
         return μpred, Σpred
 
