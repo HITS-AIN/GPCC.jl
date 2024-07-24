@@ -1,9 +1,5 @@
 function delayedCovariance(kernel, scale, delays, ρ, x, y)
 
-    # Check positivity of parameters
-
-    @assert(all(scale .> 0))
-
     ρ <= 0 ? error(@sprintf("ρ=%.8f is <= 0", ρ)) : nothing
 
     # number of bands
@@ -25,10 +21,6 @@ end
 
 function delayedCovariance(kernel, scale, delays, ρ, x) 
     
-    # Check positivity of parameters
-
-    @assert(all(scale .> 0))
-
     ρ <= 0 ? error(@sprintf("ρ=%.8f is <= 0", ρ)) : nothing
 
     # number of bands
