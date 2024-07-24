@@ -5,7 +5,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
 
 end
 
-function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
+function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = false, JITTER = 1e-8)
 
     #---------------------------------------------------------------------
     # Set constants
@@ -22,7 +22,7 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
 
     μb  = map(mean, yarray)
 
-    σ²b = 10 * Diagonal(map(var, yarray)) # inflated prior variance
+    σ²b = 100 * Diagonal(map(var, yarray)) # inflated prior variance
 
     B  = [σ²b[l]*𝟏[l]*𝟏[l]' for l in 1:L] # prior cov after replicating to match number of observations
 
@@ -36,14 +36,12 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
     @assert(L == length(yarray) == length(tarray) == length(stdarray))
 
 
-    covmatrix(x, y, α, ρ) = [α*α * kernel(x₁, x₂ ; ρ=ρ)  for x₁ in x, x₂ in y]
+    covmatrix(x, y, α, ρ) = [α * α * kernel(x₁, x₂ ; ρ=ρ)  for x₁ in x, x₂ in y]
 
 
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
-
-    makeα(x) = softplus(x)
 
     makeρ(x) = transformbetween(x, ρmin, ρmax)
 
@@ -51,7 +49,7 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
 
         @assert(length(param) == 1L + 1)
 
-        local α = makeα.(param[0L+1:1L])
+        local α = param[0L+1:1L]
 
         local ρ = makeρ(param[1L+1])
 
@@ -129,14 +127,14 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
     # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    sampleα() = map(var, yarray)  .* (rand(rng, L) * (1.2 - 0.8) .+ 0.8)
+    sampleα() = map(std, yarray)  .* randn(rng, L)
 
 
     #---------------------------------------------------------------------
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
-    sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
+    sampleunconstrainedsolution(i) = [sampleα();
                                       invtransformbetween(initialρvalues[i], ρmin, ρmax)]
 
 
