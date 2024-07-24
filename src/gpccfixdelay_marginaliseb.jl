@@ -90,24 +90,6 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
 
     #---------------------------------------------------------------------
-    # Function for constraining parameters
-    #---------------------------------------------------------------------
-
-    function unpack(param)
-
-        @assert(length(param) == L)
-
-        local α = exp.(param) # if we ever use another function  than exp,
-                              # then the log-normal distribution below is no longer valid
-                              # Changing this would also affect the prior above
-                              # Changing this would also affect sampleunconstrainedsolution below
-
-        return α
-
-    end
-
-
-    #---------------------------------------------------------------------
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
@@ -153,7 +135,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     function getsolution()
 
-        local opt = Optim.Options(show_trace = false, iterations = iterations, show_every = 2, g_tol=1e-6)
+        local opt = Optim.Options(show_trace = verbose, iterations = iterations, show_every = 2, g_tol=1e-8)
 
         local randomsolutions = [sampleunconstrainedsolution() for _ in 1:initialrandom]
 
@@ -170,9 +152,9 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
 
     allresults = [getsolution() for _ in 1:numberofrestarts]
 
-    result     = allresults[argmin([res.minimum for res in allresults])]
+    result = allresults[argmin([res.minimum for res in allresults])]
 
-    paramopt   = result.minimizer
+    αopt = result.minimizer
 
     verbose ? @printf("\n\tOverall minimum is %f\n", result.minimum) : nothing
 
@@ -181,9 +163,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
-    α = unpack(paramopt)
-   
-    A = Diagonal(Qmatrix(length.(tarray))*α)
+    A = Diagonal(Qmatrix(length.(tarray))*αopt)
 
     KSobsB = Symmetric(A*K₁*A + SobsB)
   
@@ -234,13 +214,13 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
         B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(kernel, α, τ, ρfixed, tarray, ttest) + B✴
+        kB✴ = delayedCovariance(kernel, αopt, τ, ρfixed, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(kernel, α, τ, ρfixed, ttest) + B✴✴
+        cB = delayedCovariance(kernel, αopt, τ, ρfixed, ttest) + B✴✴
 
         # full predictive covariance
-        Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + JITTER*I
+        Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) #+ JITTER*I
 
         # predictive mean
 
@@ -305,7 +285,7 @@ function gpccfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterat
     end
 
 
-    return -result.minimum, α, MvNormal(μpostb, Σpostb), predictTest
+    return -result.minimum, αopt, MvNormal(μpostb, Σpostb), predictTest
     
     
 end
