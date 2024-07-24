@@ -1,10 +1,8 @@
-function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose)
+function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
 
     #---------------------------------------------------------------------
     # Set constants
     #---------------------------------------------------------------------
-
-    JITTER = 1e-8
 
     L = length(tarray)
 
