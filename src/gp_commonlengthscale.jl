@@ -1,4 +1,4 @@
-function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose, JITTER = 1e-8)
+function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = false, JITTER = 1e-8)
 
     gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, JITTER = JITTER)[4]
 
