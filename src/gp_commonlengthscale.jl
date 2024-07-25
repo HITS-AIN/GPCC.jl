@@ -1,11 +1,18 @@
-function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = false, JITTER = 1e-8)
+function defaultmaximumlengthscale(tarray)
+
+    maximum([maximum(t)-minimum(t) for t in tarray]) / 2
+
+end
+
+
+function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 10, ρmin = 0.1, ρmax = defaultmaximumlengthscale(tarray), verbose = false, JITTER = 1e-10)
 
     gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, JITTER = JITTER)[4]
 
 
 end
 
-function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = false, JITTER = 1e-8)
+function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 10, ρmin = 0.1, ρmax = defaultmaximumlengthscale(tarray), verbose = false, JITTER = 1e-10)
 
     #---------------------------------------------------------------------
     # Set constants
@@ -68,7 +75,7 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
 
         for l in 1:L
 
-            local K = Symmetric(covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] + B[l])
+            local K = Symmetric(covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] + B[l] + JITTER*I)
 
             aux += logpdf(MvNormal(μb[l]*𝟏[l], K), yarray[l])
 
@@ -178,7 +185,7 @@ function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterati
 
     α, ρ = unpack(paramopt)
 
-    K = [covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] + B[l] for l in 1:L]
+    K = [covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] + B[l] + JITTER*I for l in 1:L]
 
     #---------------------------------------------------------------------
     # Functions for predicting on test data
