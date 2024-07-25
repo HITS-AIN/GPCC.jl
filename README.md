@@ -149,13 +149,11 @@ end
 candidatedelays = collect(0.0:0.1:60.0)
 
 for i in 1:5
-       tobs, yobs, σobs, lambda, = readdataset(source = listdatasets()[i]);
-       h = setup_problem(tobs, yobs, σobs);
-       loglikel = h(candidatedelays)
-       plot(candidatedelays, getprobabilities(loglikel),label=listdatasets()[i])
+       tobs, yobs, σobs, lambda, = readdataset(source = listdatasets()[i])
+       P = posteriordelay(tobs, yobs, σobs, candidatedelays)
+       figure(); title(listdatasets()[i])
+       plot(candidatedelays, P)
 end
-
-legend()
 ```
 
 
