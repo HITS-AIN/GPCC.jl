@@ -131,7 +131,7 @@ pinthreads(:cores)
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves()
 
-candidatedelays = LinRange(0.0, 10.0, 100)
+candidatedelays = LinRange(0.0, 6.0, 100)
 P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.rbf, iterations = 1000)
 
 size(P) # P is now a matrix, above it was a vector
