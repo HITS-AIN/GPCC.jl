@@ -119,6 +119,7 @@ Having generated the simulated data, we will now estimate the delays. To that en
 The returned `P` contains the probability of each candidate delay. We can plot the result with:
 ```
 using PyPlot # must be independently installed
+figure("Delay for two simulated lightcurves")
 plot(candidatedelays, P)
 ```
 
