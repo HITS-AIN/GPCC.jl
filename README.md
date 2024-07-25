@@ -34,10 +34,9 @@ add GPCC
 ```
 
 The package exposes the following functions of interest to the user: 
-- `setup_problem`,
+- `posteriordelay`,
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
 - `gpcc`,
-- `getprobabilities`
 - `uniformpriordelay`.
 
 These functions can be queried in help mode in the Julia REPL. 
@@ -52,14 +51,13 @@ We recommend to use as many threads as physical cores.
 To get the most performance, please read this note [here](https://carstenbauer.github.io/ThreadPinning.jl/dev/explanations/blas/) concerning issues when running multithreaded code that makes use of BLAS calls. In most cases, the following easy instructions suffice:
 ```
 using LinearAlgebra
-# Set the number of BLAS threads to 1
-BLAS.set_num_threads(1)
+BLAS.set_num_threads(1) # Set the number of BLAS threads to 1
 
 using ThreadPinning # must be indepedently installed
 pinthreads(:cores) # allows you to pin Julia threads to specific CPU-threads 
 ```
 
-We recommend to always use the above code before estimating delays.
+Unless you are using the Intel MKL, we recommend to always use the above code before estimating delays.
 
 ## ▶ How to simulate data
 
@@ -123,6 +121,28 @@ figure("Delay for two simulated lightcurves")
 plot(candidatedelays, P)
 ```
 
+-------
+We show how the above estimation of the posterior delay can be performed for three lightcurves:
+```
+using GPCC, LinearAlgebra, ThreadPinning
+BLAS.set_num_threads(1)
+pinthreads(:cores) 
+
+tobs, yobs, σobs, truedelays = simulatethreelightcurves()
+
+candidatedelays = LinRange(0.0, 6.0, 100)
+P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.rbf, iterations = 1000)
+
+size(P) # P is now a matrix, above it was a vector
+
+figure();title("marginals")
+plot(candidatedelays, vec(sum(P,dims=[2;3])))
+plot(candidatedelays, vec(sum(P,dims=[1;3])))
+
+figure(); title("joint distribution")
+pcolor(candidatedelays, candidatedelays, P)
+```
+
 
 ## ▶ Estimate delays for real datasets
 
@@ -169,13 +189,16 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 # We first determine the lengthscale for the GPCC with the following call.
 # We choose the rbf kernel. Other choices are GPCC.OU, GPCC.matern32, GPCC.matern52
 
+ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
+
+
 # We choose the same kernel as the one used for inferring the length scale.
 # Choosing a different kernel may lead to non-sensical results.
 # We fit the model for the given the true delays above. 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the model runs for a maximum of 1000 iterations.
 
-loglikel, α, postb, pred = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000)
+loglikel, α, postb, pred = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000, ρfixed = ρ)
 ```
 
 The call returns three outputs:
@@ -190,7 +213,7 @@ We show below how function `pred` can be used both for making predictions and ca
 
 Having fitted the model to the data, we can now make predictions. We first define the interval over which we want to predict and use `pred`:
 ```
-t_test = collect(0:0.1:20);
+t_test = collect(0:0.2:62);
 μpred, σpred = pred(t_test);
 ```
 
@@ -206,7 +229,9 @@ using PyPlot # must be independently installed, other plotting packages can be u
 
 colours = ["blue", "orange"] # define colours
 
+figure()
 for i in 1:2
+    plot(tobs[i], yobs[i], "o", color=colours[i])
     plot(t_test, μpred[i], "-", color=colours[i])
     fill_between(t_test, μpred[i] + σpred[i], μpred[i] - σpred[i], color=colours[i], alpha=0.2) # plot uncertainty tube
 end
@@ -228,7 +253,7 @@ pred(ttest, ytest, σtest)
 ```
 
 
-❗ Running GPCC on more than four light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
+❗ As a general note, running GPCC on more than four light curves and for a large number of candidate delays can be a very lengthy computation constrained by the available CPU and meomry resources! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
 
 
