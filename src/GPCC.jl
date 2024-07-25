@@ -10,34 +10,44 @@ module GPCC
 
     using ProgressMeter, ThreadTools
 
+    # using ELBOfy
+
+    using Memoization, ThreadSafeDicts
+
     
+    # Following lines makes ProgressMeter work with tmap1
 
     ProgressMeter.ncalls(::typeof(tmap1), ::Function, args...) = ProgressMeter.ncalls_map(args...)
 
-    include("setup_problem.jl"); export setup_problem
+
+    include("posteriordelay.jl")
     
-    include("newcov.jl")
+    include("covariance.jl")
 
     include("simulatedata.jl")
 
-    include("util.jl")
+    include("kernels.jl")
+
+    include("Qmatrix.jl")
+
+    include("Qvector.jl")
 
     include("gpccfixdelay_marginaliseb.jl"); 
-    include("gpccfixdelay_marginaliseb_sparse.jl"); include("inducingpoints.jl")
-
+    
     include("getprobabilities.jl")
 
     include("uniformpriordelay.jl")
 
-    # include("gpccvi_b.jl") 
-
-    include("intersection.jl"); export noisyintersection
-
-    include("infercommonlengthscale.jl"); export infercommonlengthscale
-
-
-    export simulatetwolightcurves, simulatethreelightcurves, simulatefourlightcurves,
-    gpcc,gpcc_sparse, getprobabilities, uniformpriordelay#, gpccvi
+    # include("gpccvi.jl") 
+    
+    include("gp_commonlengthscale.jl")
+    
+    export infercommonlengthscale
+    export posteriordelay
+    export simulatetwolightcurves, simulatethreelightcurves#, simulatefourlightcurves, simulatefivelightcurves
+    export gpcc
+    export getprobabilities, uniformpriordelay
+    # export gpccvi
 
 
 end
