@@ -169,6 +169,9 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 # We first determine the lengthscale for the GPCC with the following call.
 # We choose the rbf kernel. Other choices are GPCC.OU, GPCC.matern32, GPCC.matern52
 
+ρfixed = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
+
+
 # We choose the same kernel as the one used for inferring the length scale.
 # Choosing a different kernel may lead to non-sensical results.
 # We fit the model for the given the true delays above. 
