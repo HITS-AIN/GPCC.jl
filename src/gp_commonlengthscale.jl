@@ -1,22 +1,39 @@
-function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0, verbose = verbose)
+function defaultmaximumlengthscale(tarray)
 
-    #---------------------------------------------------------------------
-    # Fix random seed for reproducibility
-    #---------------------------------------------------------------------
+    maximum([maximum(t)-minimum(t) for t in tarray]) / 2
 
-    rg = MersenneTwister(seed)
+end
 
+
+function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 10, ρmin = 0.1, ρmax = defaultmaximumlengthscale(tarray), verbose = false, JITTER = 1e-10)
+
+    gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = rng, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, JITTER = JITTER)[4]
+
+
+end
+
+function gp_commonlengthscale(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 10, ρmin = 0.1, ρmax = defaultmaximumlengthscale(tarray), verbose = false, JITTER = 1e-10)
 
     #---------------------------------------------------------------------
     # Set constants
     #---------------------------------------------------------------------
 
-    JITTER = 1e-8
-
     L = length(tarray)
 
-
     Sobs = [Diagonal(stdarray[l].^2) for l in 1:L] # observed noise matrix
+
+
+    # Prior for shift vector b
+
+    𝟏 = [ones(length(tarray[l])) for l in 1:L]
+
+    μb  = map(mean, yarray)
+
+    σ²b = 100 * Diagonal(map(var, yarray)) # inflated prior variance
+
+    B  = [σ²b[l]*𝟏[l]*𝟏[l]' for l in 1:L] # prior cov after replicating to match number of observations
+
+    # SobsB = [Sobs[l] + B[l] for l in 1:L] # combined covariance to be added to GP covariance
 
 
     #---------------------------------------------------------------------
@@ -26,28 +43,24 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     @assert(L == length(yarray) == length(tarray) == length(stdarray))
 
 
-    covmatrix(x, y, α, ρ) = [α*α * kernel(x₁, x₂ ; ρ=ρ)  for x₁ in x, x₂ in y]
+    covmatrix(x, y, α, ρ) = [α * α * kernel(x₁, x₂ ; ρ=ρ)  for x₁ in x, x₂ in y]
 
 
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    makeα(x) = softplus(x)
-
     makeρ(x) = transformbetween(x, ρmin, ρmax)
 
     function unpack(param)
 
-        @assert(length(param) == 2L + 1)
+        @assert(length(param) == 1L + 1)
 
-        local α = makeα.(param[0L+1:1L])
+        local α = param[0L+1:1L]
 
-        local b = param[1L+1:2L]
+        local ρ = makeρ(param[1L+1])
 
-        local ρ = makeρ(param[2L+1])
-
-        return α, b, ρ
+        return α, ρ
 
     end
 
@@ -56,15 +69,15 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, b, ρ)
+    function objective(α, ρ)
 
         local aux = zero(eltype(α))
 
         for l in 1:L
 
-            local K = Symmetric(covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l])
+            local K = Symmetric(covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] + B[l] + JITTER*I)
 
-            aux += logpdf(MvNormal(ones(length(yarray[l])) * b[l], K), yarray[l])
+            aux += logpdf(MvNormal(μb[l]*𝟏[l], K), yarray[l])
 
         end
 
@@ -95,7 +108,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
 
             # pick initial ρ values randomly
 
-            rand(rg, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofrestarts)
+            rand(rng, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofrestarts)
 
         else
 
@@ -121,16 +134,14 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # Returns random values for initial scaling vector α and shift vector v
     #---------------------------------------------------------------------
 
-    sampleα() = map(var, yarray)  .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
-
-    sampleb() = map(mean, yarray) .* (rand(rg, L) * (1.2 - 0.8) .+ 0.8)
+    sampleα() = map(std, yarray)  .* randn(rng, L)
 
 
     #---------------------------------------------------------------------
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
-    sampleunconstrainedsolution(i) = [invmakepositive.(sampleα()); sampleb();
+    sampleunconstrainedsolution(i) = [sampleα();
                                       invtransformbetween(initialρvalues[i], ρmin, ρmax)]
 
 
@@ -140,7 +151,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
 
     function getsolution(i)
 
-        local opt = Optim.Options(show_trace = verbose, iterations = iterations, show_every = 2, g_tol=1e-6)
+        local opt = Optim.Options(show_trace = verbose, iterations = iterations, show_every = 100, g_tol=1e-6)
 
         local randomsolutions = [sampleunconstrainedsolution(i) for _ in 1:initialrandom]
 
@@ -157,7 +168,7 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # Restart optimisation multiple times as specified in `numberofrestarts`
     #---------------------------------------------------------------------
 
-    allresults = [getsolution(i) for i in 1:numberofrestarts]
+    allresults = @showprogress "optimising length scale" [getsolution(i) for i in 1:numberofrestarts]
 
     result     = allresults[argmin([res.minimum for res in allresults])]
 
@@ -172,9 +183,9 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
-    α, b, ρ = unpack(paramopt)
+    α, ρ = unpack(paramopt)
 
-    K = [covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] for l in 1:L]
+    K = [covmatrix(tarray[l], tarray[l], α[l], ρ) + Sobs[l] + B[l] + JITTER*I for l in 1:L]
 
     #---------------------------------------------------------------------
     # Functions for predicting on test data
@@ -182,19 +193,23 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
 
     function predictTest(l, ttest)
 
+        𝟏✴ = ones(length(ttest))
+
+        B✴  = σ²b[l] * 𝟏[l]*𝟏✴'
+
+        B✴✴ = σ²b[l] * 𝟏✴*𝟏✴'
+
         # dimensions: N × Ntest
-        # kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest)
-        kB✴ = covmatrix(tarray[l], ttest, α[l], ρ)
+        K✴ = covmatrix(tarray[l], ttest, α[l], ρ) + B✴
 
         # Ntest × Ntest
-        # cB = delayedCovariance(kernel, α, τ, ρ, ttest) + B✴✴
-        cB = covmatrix(ttest, ttest, α[l], ρ)
+        K✴✴  = covmatrix(ttest, ttest, α[l], ρ) + B✴✴
 
-        # full predictive covariance
-        Σpred = Symmetric(cB - kB✴' * (K[l] \ kB✴) + JITTER*I)
+        # full predictive covariance - see 2.26 in RW
+        Σpred = Symmetric(K✴✴ - K✴' * (K[l] \ K✴))
 
-        
-        μpred = kB✴' * (K[l] \ (yarray[l] .- b[l])) .+ b[l]
+        # predictive mean - see 2.25, 2.38 and 2.41 in RW
+        μpred = K✴' * (K[l] \ (yarray[l] .- μb[l])) .+ μb[l]
 
         return μpred, Σpred
 
@@ -206,7 +221,9 @@ function infercommonlengthscale(tarray, yarray, stdarray; kernel = kernel, itera
     # return:
     # • function value returned from optimisation
     # • prediction function
-    # • optimised free parameters
+    # • optimised scaling parameters
+    # • optimised length scale
 
-    -result.minimum, predictTest, (α, b, ρ)
+    -result.minimum, predictTest, α, ρ
+
 end

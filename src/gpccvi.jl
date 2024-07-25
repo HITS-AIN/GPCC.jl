@@ -1,4 +1,23 @@
-function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true, S = 50, τmax = 100.0)
+mutable struct TrackNegativeElbo{T1,F,T2}
+    elbo::T1
+    bestsofar_f::F
+    bestsofar_x::T2
+end
+
+function (trackelbo::TrackNegativeElbo)(x)
+
+    local e = -trackelbo.elbo(x)
+
+    if e < trackelbo.bestsofar_f
+        trackelbo.bestsofar_f = e
+        trackelbo.bestsofar_x = copy(x)
+    end
+
+    return e
+end
+
+
+function gpccvi(tarray, yarray, stdarray; delays = delays, kernel = kernel, iterations = iterations, seed = 1,  ρfixed =  ρfixed, verbose = true, S = 50, τmax = 100.0)
 
     #---------------------------------------------------------------------
     # Fix random seed, get number of filters and check dimesions
@@ -8,7 +27,7 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     
     L = length(tarray)
     
-    @assert(L == length(yarray) == length(tarray) == length(stdarray))
+    @assert(L == length(yarray) == length(tarray) == length(stdarray) == length(delays))
 
 
     #---------------------------------------------------------------------
@@ -21,14 +40,23 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
 
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
-    
+    μb = map(mean, yarray)             # prior mean
+
+    Σb = 10 * Diagonal(map(var, yarray)) # inflated prior covariance
+
+    B  = Q * Σb * Q'
+
+    b̄  = Q * μb
+
+    SobsB = Sobs + B
+
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    f(x) = [   softplus.(x[1:1L]); x[1L+1:2L];    transformbetween.(x[2L+1:(3L-1)],0.0, τmax)]
+    f(x) = softplus.(x[1:1L])
     
-    g(x) = [invsoftplus.(x[1:1L]); x[1L+1:2L]; invtransformbetween.(x[2L+1:(3L-1)],0.0, τmax)]
+    g(x) = invsoftplus.(x[1:1L])
     
 
     #---------------------------------------------------------------------
@@ -37,15 +65,11 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
   
     function unpack(param)
 
-        @assert(length(param) == 3L-1)
+        @assert(length(param) == 1L)
 
         local α = param[0L+1:1L]
 
-        local b = param[1L+1:2L]
-
-        local τ = [0; cumsum(param[2L+1:3L-1])]
-
-        return α, b, τ, ρfixed
+        return α
 
     end
 
@@ -54,18 +78,30 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, b, τ, ρ)
 
-        local K = Symmetric(delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs)
+    delayedx = reduce(vcat, [x.-d for (x, d) in zip(tarray, delays)])
 
-        return logpdf(MvNormal(Q*b, K), Y)
+    K₁ = covariance_unit_amplitude(kernel, ρfixed, delayedx) # stays fixed throughout!
+
+    Y_minus_b̄ = Y-b̄
+
+    function objective(α)
+        
+        local A = Diagonal(Q*α)
+        
+        local C = cholesky(Symmetric(A*K₁*A + SobsB)).L
+
+        -0.5*sum(abs2.(C\(Y_minus_b̄))) - 0.5*2*sum(log.(diag(C))) #- 0.5*log(2π)*size(C,1)
 
     end
     
     
-    helper(p) = objective(unpack(p)...)
+    helper(p) = objective(unpack(p))
     
-    elbo = elbofy(3L-1, (3L -1)* S, helper, transform = f, invtransform = g) # take S samples per dimension/parameter
+    elbo = elbofy(1*L, 1*L*S, helper, transform = f, invtransform = g) # take S samples per dimension/parameter
+
+
+    testelbo = elbofy(1*L, 1*L*S, helper; transform = f, invtransform = g, rg = MersenneTwister(10101)) # take S samples per dimension/parameter
 
     verbose ? display(elbo) : nothing
 
@@ -82,38 +118,50 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
 
         local aux(x) = -helper(f(x))
 
-        optimize(aux, 1*randn(rg, 3L-1), NelderMead(), opt).minimizer
+        optimize(aux, 1*randn(rg, 1*L), NelderMead(), opt).minimizer
      
     end
 
     
     #-------------------------------------------------------
-    # initial covariance root is spherical,
-    # radius is optimised below in one-dimensional optimisation problem
+    # initial covariance root is spherical
     #-------------------------------------------------------
     
-    Cdiag = let
+    Cdiag = 0.1 * ones(1*L)
+    
+    
+    #-------------------------------------------------------
+    # Capture progress
+    #-------------------------------------------------------
+
+    tracknegelbo = TrackNegativeElbo(elbo, Inf, zeros(1*L))
+
+    counter = 0
+
+    function callback(_)
         
-        verbose ? @printf("Initialising covariance.\n") : nothing
+        counter += 1
         
-        local r_range = 0.1:0.1:1.0
+        if mod(counter, 200) == 1
         
-        local bestindex = argmax([elbo(μ₀, r * ones(3L-1)) for r in r_range])
+            @printf("Iter %d\t elbo is %f,\t test elbo is %f\n",counter, tracknegelbo.bestsofar_f, -testelbo(tracknegelbo.bestsofar_x))
         
-        @printf("Best r is %f\n", r_range[bestindex])
-        
-        r_range[bestindex] * ones(3L-1) 
-        
+        else
+            
+            mod(counter, 10) ==1 ? @printf("Iter %d\t elbo is %f\n",counter,tracknegelbo.bestsofar_f) : nothing
+
+        end
+
+        return false
+
     end
-    
-    
     #-------------------------------------------------------
     # optimise elbo and get optimal variational parameters
     #-------------------------------------------------------
 
-    opt = Optim.Options(show_trace = true, iterations = iterations, show_every=1)# callback = callback)
+    opt = Optim.Options(show_trace = false, iterations = iterations, show_every=1, callback = callback)
    
-    θ = optimize(x -> -elbo(x), [μ₀; Cdiag], NelderMead(), opt).minimizer
+    θ = optimize(tracknegelbo, [μ₀; Cdiag], NelderMead(), opt).minimizer
     
 
     #----------------------------------------------
@@ -127,49 +175,50 @@ function gpccvi(tarray, yarray, stdarray; kernel = kernel, iterations = iteratio
     # Draw samples from predictive distribution
     #----------------------------------------------
     
-    samplepredict(ttest0::Array{T, 1}) where T<:Real = samplepredict([ttest0 for _ in 1:L])
+    # samplepredict(ttest0::Array{T, 1}) where T<:Real = samplepredict([ttest0 for _ in 1:L])
 
 
-    function samplepredict(ttest) 
+    # function samplepredict(ttest) 
 
-        local θ = rand(q)
+    #     local θ = rand(q)
 
-        local α, b, τ = θ[1:L], θ[L+1:2L], [0; θ[2L+1:3L-1]]
+    #     local α, b, τ = θ[1:L], θ[L+1:2L], [0; θ[2L+1:3L-1]]
 
 
-        local K = delayedCovariance(kernel, α, τ, ρfixed, tarray)
+    #     local K = delayedCovariance(kernel, α, τ, ρfixed, tarray)
 
-        local KSobsB = K + Sobs
+    #     local KSobsB = K + Sobs
 
-        # matrix for replicating elements
+    #     # matrix for replicating elements
 
-        local Q✴ = Qmatrix(length.(ttest))
+    #     local Q✴ = Qmatrix(length.(ttest))
 
-        # N × Ntest
+    #     # N × Ntest
         
-        local kB✴ = delayedCovariance(kernel, α, τ, ρfixed, tarray, ttest)
+    #     local kB✴ = delayedCovariance(kernel, α, τ, ρfixed, tarray, ttest)
 
-        # Ntest × Ntest
+    #     # Ntest × Ntest
         
-        local cB = delayedCovariance(kernel, α, τ, ρfixed, ttest)
+    #     local cB = delayedCovariance(kernel, α, τ, ρfixed, ttest)
 
-        # full predictive covariance
+    #     # full predictive covariance
 
-        local Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + 1e-8*I
+    #     local Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + 1e-8*I
 
-        # predictive mean
+    #     # predictive mean
 
-        local μpred = kB✴' * (KSobsB \ (Y - (Q*b))) + (Q✴ * b)
+    #     local μpred = kB✴' * (KSobsB \ (Y - (Q*b))) + (Q✴ * b)
 
-        # draw sample and then split it per filter
+    #     # draw sample and then split it per filter
 
-        local Ntest = length.(ttest)
+    #     local Ntest = length.(ttest)
 
-        local sample = rand(MvNormal(μpred, Σpred))
+    #     local sample = rand(MvNormal(μpred, Σpred))
 
-        return [sample[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
+    #     return [sample[(sum(Ntest[1:(i-1)])+1):sum(Ntest[1:i])] for i in 1:L]
 
-    end
+    # end
     
-    return q, samplepredict
+    # return q, samplepredict
+    return q
 end

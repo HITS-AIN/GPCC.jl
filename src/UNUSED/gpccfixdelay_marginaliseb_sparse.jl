@@ -1,5 +1,5 @@
 """
-    minopt, pred, α, b, ρ = gpccb(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+    loglikel, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false)
 
 Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
 
@@ -18,24 +18,25 @@ Input arguments
 - `delays`: L-dimensional vector of delays.
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
 - `seed`: Random seed controls the random sampling of initial solution.
-- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation.
-- `initialrandom`: Before optimisation begins, a number of random solutions is sampled and the one with the highest likelihood becomes the starting point for the optimisation.
-- `rhomin`: minimum value for lengthscale ρ of GP.
+- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
+- `initialrandom`: Before optimisation begins, a number of random solutions are sampled and the one with the highest likelihood becomes the starting point for the optimisation.
+- `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
 - `rhomax`: maximum value for lengthscale ρ of GP.
+- `verbose`: true / false (default). If set to `true`, auxiliary messages will be printed out 
 
 
 Returned arguments
 ==================
-- `minopt`: negative log-likelihood reached when optimising GP hyperparameters.
+- `loglikel`: log-likelihood reached when optimising GP hyperparameters.
 - `predict`: function for predicting on out-of-sample data.
 - `α`: coefficients by which the latent Gaussian process is scaled in each band
-- `b`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
+- `postb`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
 - `ρ`: length scale of latent Gaussian Process
 
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
-julia> minopt, pred, α, b, ρ = gpccb(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
+julia> loglikel, pred, α, postb, ρ = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
@@ -43,17 +44,17 @@ julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpccb(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax)
+function gpcc_sparse(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false, ρfixed = ρfixed, dx = dx)
 
     # Same function as below, but easier name for user to call
 
-    gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax)
+    gpccfixdelay_sparse(tarray, yarray, stdarray; kernel = kernel, τ = delays, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = rhomin, ρmax = rhomax, verbose = verbose, ρfixed = ρfixed, dx = dx)
 
 
 end
 
 
-function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, ρmin = 0.1, ρmax = 20.0)
+function gpccfixdelay_sparse(tarray, yarray, stdarray; kernel = kernel, τ = τ, iterations = iterations, seed = seed, numberofrestarts = numberofrestarts, initialrandom = initialrandom, ρmin = ρmin, ρmax = ρmax, verbose = verbose, ρfixed = ρfixed, dx = dx)
 
     #---------------------------------------------------------------------
     # Fix random seed for reproducibility
@@ -69,6 +70,7 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     JITTER = 1e-8
 
     L = length(tarray)
+
 
 
     #---------------------------------------------------------------------
@@ -89,37 +91,26 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     Sobs = Diagonal(reduce(vcat, stdarray).^2) # observed noise matrix
 
 
-    # Closed form solution for shift vector
+    μb = map(mean, yarray)             # prior mean
 
-    b = (Q'Q)\Q'*Y
-
-    Qb = Q*b
-
-    #---------------------------------------------------------------------
-    # Let user know what is being run
-    #---------------------------------------------------------------------
-
-    informuser(seed = seed, iterations = iterations, numberofrestarts = numberofrestarts,
-                initialrandom = initialrandom, JITTER = JITTER, ρmin = ρmin, ρmax = ρmax, Σb = ones(L,L))
+    Σb = 10 * Diagonal(map(var, yarray)) # inflated prior covariance
 
 
+    b̄  = Q * μb
+
+    
     #---------------------------------------------------------------------
     # Functions for constraining parameters
     #---------------------------------------------------------------------
 
-    makeα(x) = makepositive(x) + 1e-8
-
-    makeρ(x) = transformbetween(x, ρmin, ρmax)
-
     function unpack(param)
 
-        @assert(length(param) == L + 1)
+        @assert(length(param) == L)
 
-        local α = makeα.(param[1:1L])
+        local α = exp.(param) # if we ever use another function  than exp,
+                              # then the log-normal distribution below is no longer valid
 
-        local ρ = makeρ(param[L+1])
-
-        return α, ρ
+        return α
 
     end
 
@@ -128,55 +119,83 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     # Define objective as marginal log-likelihood and auxiliaries
     #---------------------------------------------------------------------
 
-    function objective(α, ρ)
+    delayedx = reduce(vcat, [x.-d for (x, d) in zip(tarray, τ)])
 
-        local K = delayedCovariance(kernel, α, τ, ρ, tarray) + Sobs
+    z = inducingpoints(delayedx; dx = dx)
 
-        makematrixsymmetric!(K)
+    # @show size(z)
 
-        return logpdf(MvNormal(Qb, K), Y)
+    Km  = covariance_unit_amplitude(kernel, ρfixed, z) +JITTER*I# stays fixed throughout!
+
+    Knm = covariance_unit_amplitude(kernel, ρfixed, delayedx, z) 
+
+    K̃diag = ones(length(delayedx)) - diag(Knm*(Km\Knm'))
+   
+
+    W⁻¹, logdetW = let
+        
+        local Sobs⁻¹ = inv(Sobs) 
+
+        local middle_term = inv(Σb) + Q'*Sobs⁻¹*Q
+
+        local result1 = Sobs⁻¹ - Sobs⁻¹*Q*((middle_term)\(Q'*Sobs⁻¹))
+
+        local result2 = logdet(Sobs) + logdet(Σb) + logdet(middle_term)
+
+        result1, result2
 
     end
 
-    # convenient call
+    logdetKm = logdet(Km)
 
-    objective(param) = objective(unpack(param)...)
 
+    trace_contribution =  - 0.5*sum(Sobs.diag .* K̃diag)
+
+    # function objective(α)
+
+    #     local A = Diagonal(Q*α)
+
+    #     local U = A*Knm
+
+    #     local R = Symmetric((U*(Km\U') + W))
+
+    #     logpdf(MvNormal(b̄, R), Y) + trace_contribution
+        
+    # end
+
+    function fasterobjective(α)
+        
+        local A = Diagonal(Q*α)
+
+        local U = A*Knm
+        
+        local C = cholesky(Symmetric(Km + U'*W⁻¹*U)).L
+        
+        local F = C\(U'*W⁻¹)
+
+        local R⁻¹ = W⁻¹ - F'*F
+
+        local logdetR = logdetW + 2sum(log.(diag(C))) - logdetKm
+
+        local diff = Y-b̄
+
+        (-0.5*length(Y)*log(2π) - 0.5*dot(diff, R⁻¹*(diff)) - 0.5*logdetR) + trace_contribution
+       
+        # even though last term is constant, it is important when comparing to other delays
+ 
+    end
+    
+
+    
     # Define negative objective
 
-    negativeobjective(x) = - objective(x)
+    negativeobjective(x) = - fasterobjective(x)
 
     # Auxiliary objective catches exceptions
 
-    safenegativeobj = safewrapper(negativeobjective)
+    safenegativeobj = negativeobjective#safewrapper(negativeobjective) ❗❗❗❗❗❗❗❗❗❗
 
 
-    #---------------------------------------------------------------------
-    # Define initial values for lengthscale ρ
-    #---------------------------------------------------------------------
-
-    initialρvalues = let
-
-        if numberofrestarts == 1 || numberofrestarts == 2
-
-            # pick initial ρ values randomly
-
-            rand(rg, Uniform(ρmin + 1e-3, ρmax - 1e-3), numberofrestarts)
-
-        else
-
-            # initial ρ values on grid
-
-            collect(MiscUtil.logrange(ρmin + 1e-3, ρmax - 1e-3, numberofrestarts))
-
-        end
-
-    end
-
-
-    @printf("\n\tInitial ρ values are:\n")
-
-    map(x -> @printf("\t%f\n", x), initialρvalues)
 
 
     #---------------------------------------------------------------------
@@ -190,19 +209,18 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     # Returns random unconstrained solution
     #---------------------------------------------------------------------
 
-    sampleunconstrainedsolution(i) = [invmakepositive.(sampleα());
-                                      invtransformbetween(initialρvalues[i], ρmin, ρmax)]
+    sampleunconstrainedsolution() = invmakepositive.(sampleα())
 
 
     #---------------------------------------------------------------------
     # Function below calls optimiser
     #---------------------------------------------------------------------
 
-    function getsolution(i)
+    function getsolution()
 
         local opt = Optim.Options(show_trace = false, iterations = iterations, show_every = 2, g_tol=1e-6)
 
-        local randomsolutions = [sampleunconstrainedsolution(i) for _ in 1:initialrandom]
+        local randomsolutions = [sampleunconstrainedsolution() for _ in 1:initialrandom]
 
         local bestindex = argmin(map(safenegativeobj, randomsolutions))
 
@@ -217,26 +235,61 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     # Restart optimisation multiple times as specified in `numberofrestarts`
     #---------------------------------------------------------------------
 
-    allresults = [getsolution(i) for i in 1:numberofrestarts]
+    allresults = [getsolution() for _ in 1:numberofrestarts]
 
     result     = allresults[argmin([res.minimum for res in allresults])]
 
     paramopt   = result.minimizer
 
-    @printf("\n\tOverall minimum is %f\n", result.minimum)
+    if verbose
+        @printf("\n\tOverall minimum is %f\n", result.minimum)
+    end
 
 
     #---------------------------------------------------------------------
     # instantiate learned kernel matrix
     #---------------------------------------------------------------------
 
-    @show α, ρ = unpack(paramopt)
+    α = unpack(paramopt)
+   
+    A = Diagonal(Qmatrix(length.(tarray))*α)
 
-    K = delayedCovariance(kernel, α, τ, ρ, tarray)
+    # KSobsB = Symmetric(A*K₁*A + SobsB)
 
-    KSobsB = K + Sobs
 
-    makematrixsymmetric!(KSobsB)
+    #---------------------------------------------------------------------
+    # Approximate posterior distribution for scalings α via laplace.
+    # Works only if scalings contraint in logarithm in unpack function!  
+    #---------------------------------------------------------------------
+
+    qa = let
+
+        0
+        
+        # μã = paramopt
+
+        # Hã = Diagonal(diag(ForwardDiff.hessian(x -> -objective(unpack(x)), μã)))
+
+        # MvLogNormal(μã, inv(Hã))
+
+    end
+
+
+    #---------------------------------------------------------------------
+    # conditional posterior distribution for shifts b given α
+    #---------------------------------------------------------------------
+
+    function get_qb(α) 
+        
+        local A = Diagonal(Qmatrix(length.(tarray))*α)
+
+        local Σpostb = (inv(Σb) + Q'*((Sobs + A*K₁*A)\Q)) \ I
+        
+        local μpostb = Σpostb * ((Q' / (Sobs + A*K₁*A))*Y + Σb\μb)
+
+        MvNormal(μpostb, Symmetric(Σpostb))
+
+    end
 
 
     #---------------------------------------------------------------------
@@ -245,25 +298,27 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
 
     function predictTest(ttest::Union{Array{Array{Float64, 1}, 1}, Array{T} where T<:AbstractRange{S} where S<:Real})
 
-        # matrix for replicating elements
-        Q✴ = Qmatrix(length.(ttest))
+        
+        Q✴  = Qmatrix(length.(ttest))
+
+        B✴  = Q * Σb * Q✴'
+
+        B✴✴ = Q✴ * Σb * Q✴'
 
         # dimensions: N × Ntest
-        kB✴ = delayedCovariance(kernel, α, τ, ρ, tarray, ttest)
+        kB✴ = delayedCovariance(kernel, α, τ, ρfixed, tarray, ttest) + B✴
 
         # Ntest × Ntest
-        cB = delayedCovariance(kernel, α, τ, ρ, ttest)
+        cB = delayedCovariance(kernel, α, τ, ρfixed, ttest) + B✴✴
 
         # full predictive covariance
-        Σpred = cB - kB✴' * (KSobsB \ kB✴)
-
-        makematrixsymmetric!(Σpred)
-
-        Σpred = Σpred + JITTER*I
+        Σpred = Symmetric(cB - kB✴' * (KSobsB \ kB✴)) + JITTER*I
 
         # predictive mean
 
-        μpred = kB✴' * (KSobsB \ (Y - (Q*b))) + (Q✴ * b)
+        b̄✴ = Q✴ * μb
+
+        μpred = kB✴' * (KSobsB \ (Y - b̄)) + b̄✴
 
         return μpred, Σpred
 
@@ -329,5 +384,6 @@ function gpccbfixdelay(tarray, yarray, stdarray; kernel = kernel, τ = τ, itera
     # • prediction function
     # • optimised free parameters
 
-    result.minimum, predictTest, (α, b, ρ)
+    -result.minimum, predictTest, (qa, get_qb, ρfixed)
+    
 end

@@ -139,7 +139,7 @@ function simulatedata(;σ = 0.75, seed = 1)
     # Data generation parameters
     #---------------------------------------------------------------------
 
-    N = [60; 50; 40; 30] # number of data items per band
+    N = [80; 70; 60; 50] # number of data items per band
 
     t = [rand(rg, N[1])*40, rand(rg, N[2])*60, rand(rg, N[3])*70, rand(rg, N[4])*80]
 
