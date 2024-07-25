@@ -51,7 +51,7 @@ We recommend to use as many threads as physical cores.
 
 To get the most performance, please read this note [here](https://carstenbauer.github.io/ThreadPinning.jl/dev/explanations/blas/) concerning issues when running multithreaded code that makes use of BLAS calls. In most cases, the following easy instructions suffice:
 ```
-using LinearAlgebrea
+using LinearAlgebra
 # Set the number of BLAS threads to 1
 BLAS.set_num_threads(1)
 
@@ -96,11 +96,26 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 ## ▶ How to estimate delays
 
+Start Julia with multiple threads.
+We simulate some data:
+```
+using GPCC, LinearAlgebra, ThreadPinning
+BLAS.set_num_threads(1)
+pinthreads(:cores) 
+
+tobs, yobs, σobs, truedelays = simulatetwolightcurves()
+```
+
 Having generated the simulated data, we will now estimate the delays. To that end we use the function `setup_problem`:
 ```
 h = setup_problem(tobs, yobs, σobs)
 ```
 Function `h` takes as an argument a candidate delay and returns the corresponding likelihood.
+For example:
+```
+h(1.5) # what is the likelihood of delay 1.5 days?
+```
+
 Alternatively, it can be evaluated on a number of delays:
 ```
 candidatedelays = LinRange(0.0,4.0,100)
@@ -113,6 +128,39 @@ using PyPlot # must be indepedently installed
 plot(candidatedelays, getprobabilities(loglikel))
 ```
 
+## ▶ Estimate delays for real datasets
+
+In the following script, we estimate the delays for a number of objects where two light curves are available.
+The real data are provided in the package [GPCCData.jl](https://github.com/HITS-AIN/GPCCData.jl).
+After stating Julia with multiple threads, we execute the following script:
+```
+using GPCC, LinearAlgebra, ThreadPinning
+BLAS.set_num_threads(1)
+pinthreads(:cores)
+
+using GPCCData # needs to be indepedently installed, provides access to real data
+using PyPlot # needs to be indepedently installed
+
+let # WARMUP - Julia precompiles code
+
+  tobs, yobs, σobs, truedelays = simulatetwolightcurves()
+  candidatedelays = LinRange(0.0,4.0,3)
+  h = setup_problem(tobs, yobs, σobs);
+  h(candidatedelays)
+
+end
+
+candidatedelays = collect(0.0:0.1:60.0)
+
+for i in 1:5
+       tobs, yobs, σobs, lambda, = readdataset(source = listdatasets()[i]);
+       h = setup_problem(tobs, yobs, σobs);
+       loglikel = h(candidatedelays)
+       plot(candidatedelays, getprobabilities(loglikel),label=listdatasets()[i])
+end
+
+legend()
+```
 
 
 
@@ -179,106 +227,6 @@ ytest = [ [6.34, 5.49, 5.38], [13.08, 12.37, 15.69]]
 
 pred(ttest, ytest, σtest)
 ```
-
-## ▶ Evaluating a set of candidate delays
-
-Given the simulated data, suppose we would like to evaluate the posterior probability of a set of candidate delays.
-Noting that without loss of generality we can always set the delay of the 1st band equal to zero, we define the following grid of delays:
-```
-candidatedelays = collect(0.0:0.2:20)
-```
-
-We use `map` to run `gpcc` on all candidate delays as follows:
-```
-using GPCC
-
-using PyPlot # we need this for plotting the posterior probabilities, must be independently installed. Other plotting packages can be used instead
-
-tobs, yobs, σobs, truedelays = simulatetwolightcurves();
-
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
-
-loglikel = map(helper, candidatedelays)
-
-figure()
-
-plot(candidatedelays, getprobabilities(loglikel))
-```
-
-## ▶ Evaluating a set of candidate delays in parallel threads
-
-One can easily parallelise the posterior estimation by simply replacing `map` with `tmap` provided by the package [ThreadTools.jl](https://github.com/baggepinnen/ThreadTools.jl). 
-Package `ThreadTools.jl` needs to be independently installed. Before that, one has to make sure that multiple threads are available by starting Julia with e.g. `julia -t 4` option:
-```
-using GPCC
-
-using ProgressMeter, ThreadTools # need to be independently installed
-
-using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
-
-candidatedelays = collect(0.0:0.1:20);
-
-tobs, yobs, σobs, truedelays = simulatetwolightcurves();
-
-ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...) # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
-
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
-
-loglikel = @showprogress tmap(helper, candidatedelays)
-
-figure()
-
-plot(candidatedelays, getprobabilities(loglikel))
-```
-
-
-## ▶ Evaluating a set of candidate delays for 3 light curves in parallel
-
-We show an example for calculating the posterior for 3 light curves in parallel.
-To do this, we need to start Julia with multiple threads, e.g. `julia -t 4` starts Julia with 4 threads.
-Instead of function `simulatetwolightcurves`, we use function `simulatethreelightcurves` to generate 3 synthetic light curves.
-We evaluate the delays using a `tmap` inside a `map`:
-
-```
-using GPCC
-
-using ProgressMeter, ThreadTools # need to be independently installed
-
-using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
-
-ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...)
-# this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
-
-candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
-
-tobs, yobs, σobs, truedelays = simulatethreelightcurves();
-
-out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d1;d2], iterations = 1000, rhomax = 300)[1]), candidatedelays), candidatedelays);
-
-posterior = getprobabilities(reduce(vcat, out));
-
-posterior = reshape(posterior, length(candidatedelays), length(candidatedelays));
-
-figure()
-subplot(311)
-title("joint posterior")
-pcolor(candidatedelays,candidatedelays,posterior)
-ylabel("lightcurve 2"); xlabel("lightcurve 3")
-
-subplot(312)
-title("marginal posterior for lightcurve 2")
-plot(candidatedelays,vec(sum(posterior,dims=2)))
-
-subplot(313)
-title("marginal posterior for lightcurve 3")
-plot(candidatedelays,vec(sum(posterior,dims=1)))
-```
-
-We should obtain a joint posterior and marginal posteriors similar to the ones plotted below:
-
-<p align="center">
-  <img src=2Dposterior.png alt="2Dposterior">
-</p>
 
 
 ❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
