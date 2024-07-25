@@ -122,6 +122,28 @@ figure("Delay for two simulated lightcurves")
 plot(candidatedelays, P)
 ```
 
+-------
+We show how the above estimation of the posterior delay can be performed for three lightcurves:
+```
+using GPCC, LinearAlgebra, ThreadPinning
+BLAS.set_num_threads(1)
+pinthreads(:cores) 
+
+tobs, yobs, σobs, truedelays = simulatethreelightcurves()
+
+candidatedelays = LinRange(0.0, 10.0, 100)
+P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.rbf, iterations = 1000)
+
+size(P) # P is now a matrix, above it was a vector
+
+figure();title("marginals")
+plot(candidatedelays, vec(sum(P,dims=[2;3])))
+plot(candidatedelays, vec(sum(P,dims=[1;3])))
+
+figure(); title("joint distribution")
+pcolor(candidatedelays, candidatedelays, P)
+```
+
 
 ## ▶ Estimate delays for real datasets
 
@@ -232,7 +254,7 @@ pred(ttest, ytest, σtest)
 ```
 
 
-❗ As a genenral note, running GPCC on more than four light curves and for a large number of candidate delays can be a very lengthy computation constrained by the available CPU and meomry resources! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
+❗ As a general note, running GPCC on more than four light curves and for a large number of candidate delays can be a very lengthy computation constrained by the available CPU and meomry resources! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
 
 
