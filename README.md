@@ -51,8 +51,7 @@ We recommend to use as many threads as physical cores.
 To get the most performance, please read this note [here](https://carstenbauer.github.io/ThreadPinning.jl/dev/explanations/blas/) concerning issues when running multithreaded code that makes use of BLAS calls. In most cases, the following easy instructions suffice:
 ```
 using LinearAlgebra
-# Set the number of BLAS threads to 1
-BLAS.set_num_threads(1)
+BLAS.set_num_threads(1) # Set the number of BLAS threads to 1
 
 using ThreadPinning # must be indepedently installed
 pinthreads(:cores) # allows you to pin Julia threads to specific CPU-threads 
