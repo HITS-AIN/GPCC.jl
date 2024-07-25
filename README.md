@@ -222,7 +222,7 @@ pred(ttest, ytest, σtest)
 ```
 
 
-❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
+❗ Running GPCC on more than four light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
 
 
