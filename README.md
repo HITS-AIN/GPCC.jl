@@ -34,10 +34,9 @@ add GPCC
 ```
 
 The package exposes the following functions of interest to the user: 
-- `setup_problem`,
+- `posteriordelay`,
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
 - `gpcc`,
-- `getprobabilities`
 - `uniformpriordelay`.
 
 These functions can be queried in help mode in the Julia REPL. 
