@@ -106,27 +106,22 @@ pinthreads(:cores)
 tobs, yobs, σobs, truedelays = simulatetwolightcurves()
 ```
 
-Having generated the simulated data, we will now estimate the delays. To that end we use the function `setup_problem`:
+We define a set of candidate delays that we would like to test:
 ```
-h = setup_problem(tobs, yobs, σobs)
-```
-Function `h` takes as an argument a candidate delay and returns the corresponding likelihood.
-For example:
-```
-h(1.5) # what is the likelihood of delay 1.5 days?
+candidatedelays = LinRange(0.0, 10.0, 100)
 ```
 
-Alternatively, it can be evaluated on a number of delays:
+Having generated the simulated data, we will now estimate the delays. To that end we use the function `posteriordelay`:
 ```
-candidatedelays = LinRange(0.0,4.0,100)
-loglikel = h(candidatedelays)
+ P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.rbf, iterations = 1000)
 ```
 
-Plot results:
+The returned `P` contains the probability of each candidate delay. We can plot the result with:
 ```
-using PyPlot # must be indepedently installed
-plot(candidatedelays, getprobabilities(loglikel))
+using PyPlot # must be independently installed
+plot(candidatedelays, P)
 ```
+
 
 ## ▶ Estimate delays for real datasets
 
