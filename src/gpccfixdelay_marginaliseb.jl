@@ -1,7 +1,7 @@
 """
-    loglikel, pred, α, postb, ρ = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, seed = 1, numberofrestarts = 1, initialrandom = 5, rhomin = 0.1, rhomax = rhomax, verbose = false)
+    loglikel, α, postb, pred = gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, numberofrestarts = 1, initialrandom = 10, verbose = false)
 
-Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays.
+Fit Gaussian Process Cross Correlation (GPCC) model for a given vector of delays `delays` and lengthscale `ρfixed``.
 
 Data passed to the function are organised as arrays of arrays.
 The outer array contains L number of inner arrays where L is the number of bands.
@@ -17,34 +17,33 @@ Input arguments
 - `kernel`: Specifies GP kernel function. Options are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
 - `delays`: L-dimensional vector of delays.
 - `iterations`: maximum number of iterations done when optimising marginal-likelihood of GP, i.e. optimising hyperparameters.
-- `seed`: Random seed controls the random sampling of initial solution.
-- `numberofrestarts`: Number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
-- `initialrandom`: Before optimisation begins, a number of random solutions are sampled and the one with the highest likelihood becomes the starting point for the optimisation.
-- `rhomin`: minimum value for lengthscale ρ of GP (default 0.1).
-- `rhomax`: maximum value for lengthscale ρ of GP.
+- `rng`: Set random seed generator.
+- `numberofrestarts`: number of times to repeat optimisation in order to avoid suboptimal solutions due to poor initialisation (default is 1).
+- `initialrandom`: number of initial solutions out of which the best is selected (default is 10).
+- `ρfixed`: GP lengthscale, either set by hand or obtained by `infercommonlengthscale`.
 - `verbose`: true / false (default). If set to `true`, auxiliary messages will be printed out 
 
 
 Returned arguments
 ==================
-- `loglikel`: log-likelihood reached when optimising GP hyperparameters.
-- `predict`: function for predicting on out-of-sample data.
+- `loglikel`: log-likelihood reached when optimising GPCC.
 - `α`: coefficients by which the latent Gaussian process is scaled in each band
 - `postb`: Gaussian posterior for shift parameters returned as an object of type `MvNormal`.
-- `ρ`: length scale of latent Gaussian Process
+- `predict`: function for predicting on out-of-sample data.
 
 # Example
 ```julia-repl
 julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
-julia> loglikel, pred, α, postb, ρ = gpcc(tobs, yobs, σobs; kernel = GPCC.matern32, delays = truedelays, iterations = 1000);  # fit GPCC
+julia> loglikel, α, postb, pred = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000);  # fit GPCC
 julia> trange = collect(-10:0.1:25); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
 julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
+julia> using PyPlot # this must be independently installed
 julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
 ```
 """
-function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 5, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
+function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 10, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
 
     # Same function as below, but easier name for user to call
 
