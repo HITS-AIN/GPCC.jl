@@ -159,24 +159,30 @@ end
 
 ## ▶ How to fit a dataset with `gpcc`
 
-Having generated the simulated data, we will now model them with the GPCC model. To that end we use the function `gpcc`. Options for `gpcc` can be queried in help mode.
+We show how to fit the GPCC model and make predictions with it. To that end we use the function `gpcc`. Options for `gpcc` can be queried in help mode.
 
 ```
 using GPCC
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
-# We choose the Matern32 kernel. Other choices are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
-# We fit the model for the given the true delays 
-# Note that without loss of generality we can always set the delay of the 1st band equal to zero
-# The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
+# We first determine the lengthscale for the GPCC with the following call.
+# We choose the rbf kernel. Other choices are GPCC.OU, GPCC.matern32, GPCC.matern52
 
-loglikel, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000, rhomax = 300)
+# We choose the same kernel as the one used for inferring the length scale.
+# Choosing a different kernel may lead to non-sensical results.
+# We fit the model for the given the true delays above. 
+# Note that without loss of generality we can always set the delay of the 1st band equal to zero
+# The optimisation of the model runs for a maximum of 1000 iterations.
+
+loglikel, α, postb, pred = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000)
 ```
+
 The call returns three outputs:
 - the marginal log likelihood `loglikel` reached by the optimiser.
+- a vector of scaling coefficients $\alpha$.
+- posterior distribution `postb` (of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal)) for shift $b$.
 - a function `pred` for making predictions.
-- a tuple that contains the scaling coefficients $\alpha$, posterior distribution `postb` (of type [MvNormal](https://juliastats.org/Distributions.jl/stable/multivariate/#Distributions.MvNormal)) for shift $b$  and lengthscale $\rho$ of the latent Gaussian process.
 
 We show below how function `pred` can be used both for making predictions and calculating the predictive likelihood.
 
