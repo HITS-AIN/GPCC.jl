@@ -1,3 +1,8 @@
+"""
+    pmf = getprobabilities(loglikel)
+
+Converts log-likelihoods to probabilities.
+"""
 function getprobabilities(loglikel)
 
     flatpriorvalues = ones(size(loglikel))
@@ -6,7 +11,11 @@ function getprobabilities(loglikel)
 
 end
 
+"""
+    pmf = getprobabilities(loglikel, logpriorpdfvalues)
 
+Converts log-likelihoods, accompanied by corresponding logpriorpdfvalues, to probabilities.
+"""
 function getprobabilities(loglikel, logpriorpdfvalues)
 
     # add log prior to form log joint likelihood
