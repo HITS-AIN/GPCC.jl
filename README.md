@@ -58,7 +58,7 @@ using ThreadPinning # must be indepedently installed
 pinthreads(:cores) # allows you to pin Julia threads to specific CPU-threads 
 ```
 
-We recommend to always use the above code before estimating delays.
+Unless you are using the Intel MKL, we recommend to always use the above code before estimating delays.
 
 ## ▶ How to simulate data
 
