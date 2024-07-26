@@ -36,6 +36,7 @@ add GPCC
 The package exposes the following functions of interest to the user: 
 - `posteriordelay`,
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
+- `infercommonlengthscale`,
 - `gpcc`,
 - `uniformpriordelay`.
 
