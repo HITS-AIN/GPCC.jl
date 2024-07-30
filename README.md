@@ -12,7 +12,7 @@
 
 ## ℹ What is this?
 
-It is a julia implementation of the Gaussian Process Cross Correlation (GPCC) method introduced in 
+It is a Julia implementation of the Gaussian Process Cross Correlation (GPCC) method introduced in 
 
 [*A Gaussian process cross-correlation approach to time delay estimation for reverberation mapping of active galactic nuclei*](https://github.com/HITS-AIN/GPCCpaper).
 
@@ -36,6 +36,7 @@ add GPCC
 The package exposes the following functions of interest to the user: 
 - `posteriordelay`,
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
+- `infercommonlengthscale`,
 - `gpcc`,
 - `uniformpriordelay`.
 
@@ -169,7 +170,7 @@ candidatedelays = collect(0.0:0.1:60.0)
 
 for i in 1:5
        tobs, yobs, σobs, lambda, = readdataset(source = listdatasets()[i])
-       P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.rbf)
+       P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.OU)
        figure(); title(listdatasets()[i])
        plot(candidatedelays, P)
 end
@@ -253,7 +254,7 @@ pred(ttest, ytest, σtest)
 ```
 
 
-❗ As a general note, running GPCC on more than four light curves and for a large number of candidate delays can be a very lengthy computation constrained by the available CPU and meomry resources! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
+❗ As a general note, running GPCC on more than four light curves and for a large number of candidate delays can be a very lengthy computation constrained by the available CPU and memory resources! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
 
 
 
