@@ -33,14 +33,17 @@ Returned arguments
 
 # Example
 ```julia-repl
-julia> tobs, yobs, σobs, truedelays = simulatedata(); # produce synthetic data
-julia> loglikel, α, postb, pred = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000);  # fit GPCC
-julia> trange = collect(-10:0.1:25); # define time interval for predictions
+julia> tobs, yobs, σobs, truedelays = simulatetwolightcurves(); # produce synthetic data
+julia> ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000); # estimate length scale ρ
+julia> loglikel, α, postb, pred = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, ρfixed = ρ, delays = truedelays, iterations = 1000);  # fit GPCC
+julia> trange = collect(-10:0.2:60); # define time interval for predictions
 julia> μpred, σpred = pred(trange) # obtain predictions
-julia> type(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
+julia> typeof(μpred), size(μpred) # predictions are also arrays of arrays, organised just like the data
 julia> using PyPlot # this must be independently installed
-julia> plot(trange, μpred[1], "b") # plot mean predictions for 1st band
+julia> plot(trange, μpred[1], color="b") # plot mean predictions for 1st band
 julia> fill_between(trange, μpred[1].+σpred[1], μpred[1].-σpred[1], color="b", alpha=0.3) # plot uncertainties for 1st band
+julia> plot(trange, μpred[2], color="orange") # plot mean predictions for 2nd band
+julia> fill_between(trange, μpred[2].+σpred[2], μpred[2].-σpred[2], color="orange", alpha=0.3) # plot uncertainties for 2nd band
 ```
 """
 function gpcc(tarray, yarray, stdarray; kernel = kernel, delays = delays, iterations = iterations, rng = AbstractRNG=Random.GLOBAL_RNG, numberofrestarts = 1, initialrandom = 10, verbose = false, ρfixed = ρfixed, JITTER = 1e-8)
