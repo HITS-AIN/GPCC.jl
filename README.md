@@ -136,6 +136,7 @@ P = posteriordelay(tobs, yobs, σobs, candidatedelays; kernel = GPCC.rbf, iterat
 
 size(P) # P is now a matrix, above it was a vector
 
+using PyPlot # must be indepedently installed, other plotting packages can be used instead
 figure();title("marginals")
 plot(candidatedelays, vec(sum(P,dims=[2;3])))
 plot(candidatedelays, vec(sum(P,dims=[1;3])))
