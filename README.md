@@ -95,6 +95,8 @@ errorbar(tobs[2], yobs[2], yerr=σobs[2], fmt="o", label="2nd band")
 
 ## ▶ How to estimate delays
 
+### Two-lightcurves example
+
 Start Julia with multiple threads.
 We simulate some data:
 ```
@@ -123,6 +125,8 @@ plot(candidatedelays, P)
 ```
 
 -------
+### Three-lightcurves example
+
 We show how the above estimation of the posterior delay can be performed for three lightcurves:
 ```
 using GPCC, LinearAlgebra, ThreadPinning
@@ -144,6 +148,8 @@ plot(candidatedelays, vec(sum(P,dims=[1;3])))
 figure(); title("joint distribution")
 pcolor(candidatedelays, candidatedelays, P)
 ```
+
+The above examples can be extended to more than three lightcurves.
 
 
 ## ▶ Estimate delays for real datasets
