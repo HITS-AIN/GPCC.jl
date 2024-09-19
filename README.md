@@ -51,7 +51,7 @@ The package supports the parallel evaluation of candidate delays.
 To that end, start julia with multiple threads. For instance, you can start julia with 8 threads using `julia -t8`.
 We recommend to use as many threads as physical cores.
 
-To get the most performance, please read this note [here](https://carstenbauer.github.io/ThreadPinning.jl/dev/explanations/blas/) concerning issues when running multithreaded code that makes use of BLAS calls. In most cases, the following easy instructions suffice:
+To get the most performance, please read this note [here](https://carstenbauer.github.io/ThreadPinning.jl/dev/explanations/blas/) concerning issues when running multithreaded code that makes use of BLAS calls. In most cases, the following instructions suffice:
 ```
 using LinearAlgebra
 BLAS.set_num_threads(1) # Set the number of BLAS threads to 1
