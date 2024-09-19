@@ -45,6 +45,8 @@ These functions can be queried in help mode in the Julia REPL.
 
 ## 🚀 An important note about performance
 
+*(This note is not specific to the GPCC package; it applies in general whenever BLAS threads run concurrently to julia threads.)*
+
 The package supports the parallel evaluation of candidate delays.
 To that end, start julia with multiple threads. For instance, you can start julia with 8 threads using `julia -t8`.
 We recommend to use as many threads as physical cores.
@@ -59,7 +61,7 @@ pinthreads(:cores) # allows you to pin Julia threads to specific CPU-threads
 ```
 
 Unless you are using the Intel MKL, we recommend to always use the above code before estimating delays.
-This performance note is not specific to the GPCC package, but applies in general whenever BLAS threads run concurrently to julia threads.
+
 
 ## ▶ How to simulate data
 
