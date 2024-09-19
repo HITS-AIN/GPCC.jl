@@ -59,6 +59,7 @@ pinthreads(:cores) # allows you to pin Julia threads to specific CPU-threads
 ```
 
 Unless you are using the Intel MKL, we recommend to always use the above code before estimating delays.
+This performance note is not specific to the GPCC package, but applies in general whenever BLAS threads run concurrently to julia threads.
 
 ## ▶ How to simulate data
 
