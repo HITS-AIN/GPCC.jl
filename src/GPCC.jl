@@ -1,6 +1,6 @@
 module GPCC
 
-    using PyPlot, Random
+    using Random # PyPlot, 
 
     using Optim, Distributions, LinearAlgebra, ForwardDiff
 

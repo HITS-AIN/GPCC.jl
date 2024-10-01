@@ -42,20 +42,20 @@ function simulatetwolightcurves(;σ = 0.75, seed = 1)
     t, y, σ, truedelays, α, b = simulatedata(;σ = σ, seed = seed)
 
 
-    figure()
+    # figure()
 
-    for i in 1:2
+    # for i in 1:2
 
-        plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
+    #     plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
 
-        @printf("\nBand %d\n", i)
-        @printf("\t delayed by %.2f\n", truedelays[i])
-        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
-        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
+    #     @printf("\nBand %d\n", i)
+    #     @printf("\t delayed by %.2f\n", truedelays[i])
+    #     @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
+    #     @printf("\t offset by b[%d]=%.2f\n",i, b[i])
   
-    end
+    # end
 
-    legend()
+    # legend()
 
 
     return t[1:2], y[1:2], σ[1:2], truedelays[1:2] 
@@ -73,20 +73,20 @@ function simulatethreelightcurves(;σ = 0.75, seed = 1)
 
     t, y, σ, truedelays, α, b = simulatedata(;σ = σ, seed = seed)
 
-    figure()
+    # figure()
 
-    for i in 1:3
+    # for i in 1:3
 
-        plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
+    #     plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
 
-        @printf("\nBand %d\n", i)
-        @printf("\t delayed by %.2f\n", truedelays[i])
-        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
-        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
+    #     @printf("\nBand %d\n", i)
+    #     @printf("\t delayed by %.2f\n", truedelays[i])
+    #     @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
+    #     @printf("\t offset by b[%d]=%.2f\n",i, b[i])
 
-    end
+    # end
 
-    legend()
+    # legend()
 
     return t[1:3], y[1:3], σ[1:3], truedelays[1:3]
 
@@ -96,20 +96,20 @@ function simulatefourlightcurves(;σ = 0.75, seed = 1)
 
     t, y, σ, truedelays, α, b = simulatedata(;σ = σ, seed = seed)
 
-    figure()
+    # figure()
 
-    for i in 1:4
+    # for i in 1:4
 
-        plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
+    #     plot(t[i], y[i], "o", label = @sprintf("delay = %.3f", truedelays[i]))
 
-        @printf("\nBand %d\n", i)
-        @printf("\t delayed by %.2f\n", truedelays[i])
-        @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
-        @printf("\t offset by b[%d]=%.2f\n",i, b[i])
+    #     @printf("\nBand %d\n", i)
+    #     @printf("\t delayed by %.2f\n", truedelays[i])
+    #     @printf("\t scaled by α[%d]=%.2f\n", i,α[i])
+    #     @printf("\t offset by b[%d]=%.2f\n",i, b[i])
 
-    end
+    # end
 
-    legend()
+    # legend()
 
     return t[1:4], y[1:4], σ[1:4], truedelays 
 
