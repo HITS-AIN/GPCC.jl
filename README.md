@@ -37,7 +37,8 @@ The package exposes the following functions of interest to the user:
 - `simulatetwolightcurves` and `simulatethreelightcurves`,
 - `infercommonlengthscale`,
 - `gpcc`,
-- `uniformpriordelay`.
+- `uniformpriordelay`,
+- `rbf`,`OU`,`matern32` and `matern52`.
 
 These functions can be queried in help mode in the Julia REPL. 
 
