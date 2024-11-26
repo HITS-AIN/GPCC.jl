@@ -127,7 +127,7 @@ We show below how function `pred` can be used both for making predictions and ca
 
 Having fitted the model to the data, we can now make predictions. We first define the interval over which we want to predict and use `pred`:
 ```
-t_test = collect(-3:0.1:23);
+t_test = collect(-3:0.1:65);
 μpred, σpred = pred(t_test);
 ```
 
