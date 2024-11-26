@@ -254,4 +254,4 @@ We should obtain a joint posterior and marginal posteriors similar to the ones p
 </p>
 
 
-❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. We may address the efficiency of this computation in the future.
+❗ Running GPCC on three light curves can be a very lengthy computation! This is because GPCC will try out in a brute force manner all possible delay combinations. Package (FasterGPCC.jl)[https://github.com/HITS-AIN/FasterGPCC.jl] addresses this issue to a certain extend.
