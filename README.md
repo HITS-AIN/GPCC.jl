@@ -109,11 +109,11 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
 
-# We fit the model for the given the true delays 
+# We fit the model for the given the true delays and the estimate lengthscale ρ we got in the line above.
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
 
-loglikel, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000, rhomax = 300)
+loglikel, pred, (α, postb, ρ) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = truedelays, iterations = 1000, ρfixed = ρ)
 ```
 The call returns three outputs:
 - the marginal log likelihood `loglikel` reached by the optimiser.
