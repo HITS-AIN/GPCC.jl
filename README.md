@@ -127,7 +127,7 @@ We show below how function `pred` can be used both for making predictions and ca
 
 Having fitted the model to the data, we can now make predictions. We first define the interval over which we want to predict and use `pred`:
 ```
-t_test = collect(0:0.1:20);
+t_test = collect(-3:0.1:23);
 μpred, σpred = pred(t_test);
 ```
 
@@ -139,15 +139,10 @@ Both `μpred` and `σpred` are arrays of arrays. The $l$-th inner array refers t
 </p>
 
 ```
-using PyPlot # must be independently installed, other plotting packages can be used instead
+using Plots # must be independently installed, other plotting packages can be used instead
 
-colours = ["blue", "orange"] # define colours
-
-for i in 1:2
-    plot(t_test, μpred[i], "-", color=colours[i])
-    fill_between(t_test, μpred[i] + σpred[i], μpred[i] - σpred[i], color=colours[i], alpha=0.2) # plot uncertainty tube
-end
-
+plot(t_test, μpred[1]; ribbon = σpred[1], fillalpha=0.2, color="blue")
+plot!(t_test, μpred[2]; ribbon = σpred[2], fillalpha=0.2, color="orange")
 ```
 
 
