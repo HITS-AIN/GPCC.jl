@@ -31,11 +31,10 @@ module GPCC
     
     include("gp_commonlengthscale.jl")
     
+    export rbf, OU, matern32, matern52
     export infercommonlengthscale
-    export posteriordelay
     export simulatetwolightcurves, simulatethreelightcurves
     export gpcc
     export getprobabilities, uniformpriordelay
-    export rbf, OU, matern32, matern52
 
 end
