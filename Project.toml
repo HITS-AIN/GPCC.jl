@@ -1,7 +1,7 @@
 name = "GPCC"
 uuid = "4498ab02-56af-48f6-b5af-4c1c07c71523"
 authors = ["Nikos Gianniotis <ngiann@gmail.com>"]
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"

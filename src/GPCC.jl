@@ -36,5 +36,6 @@ module GPCC
     export simulatetwolightcurves, simulatethreelightcurves
     export gpcc
     export getprobabilities, uniformpriordelay
+    export rbf, OU, matern32, matern52
 
 end
