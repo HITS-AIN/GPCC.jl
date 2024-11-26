@@ -175,7 +175,10 @@ using PyPlot # we need this for plotting the posterior probabilities, must be in
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+# Get estimate for lengthscale parameter ρ
+ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
+
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, ρfixed = ρ)[1] # keep only first output
 
 loglikel = map(helper, candidatedelays)
 
