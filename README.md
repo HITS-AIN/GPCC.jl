@@ -240,11 +240,11 @@ out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.
 posterior = getprobabilities(reduce(vcat, out));
 posterior = reshape(posterior, length(candidatedelays), length(candidatedelays));
 
-p1 = contourf(candidatedelays, candidatedelays, posterior, title = "joint posterior", ylabel="lightcurve 2", xlabel="lightcurve 3", aspect_ratio = :equal, fontsize=10)
+p1 = contour(candidatedelays, candidatedelays, posterior, title = "joint posterior", ylabel="lightcurve 2", xlabel="lightcurve 3", aspect_ratio = :equal, fontsize=10,  colorbar=false)
 p2 = plot(candidatedelays, vec(sum(posterior,dims=2)), title="marginal for lightcurve 2", label = false, fontsize=10)
 p3 = plot(candidatedelays, vec(sum(posterior,dims=1)), title="marginal for lightcurve 3", label = false, fontsize=10)
 
-plot(p2,p1,plot(legend=false,grid=false,foreground_color_subplot=:white),p3,layout=(2,2),size=(600,600))   
+plot(p2,p1,plot(legend=false,grid=false,foreground_color_subplot=:white),p3,layout=(2,2))   
 ```
 
 We should obtain a joint posterior and marginal posteriors similar to the ones plotted below:
