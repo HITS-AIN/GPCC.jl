@@ -66,13 +66,10 @@ Unless you are using the Intel MKL, we recommend to always use the above code be
 
 Method `simulatetwolightcurves` can be used to simulate data in 2 arbitrary (non-physical) bands:
 ```
+using Plots # must be independently installed,alternative plotting packages may be used. 
 using GPCC
 tobs, yobs, σobs, truedelays = simulatetwolightcurves() # output omitted
 
-# Plot data.
-# Plots.jl must be independently installed.
-# Alternative plotting packages may be used.
-using Plots
 scatter(tobs[1],yobs[1],grid=false,yerror=σobs[1], color="blue")
 scatter!(tobs[2],yobs[2],grid=false,yerror=σobs[2], color="orange")
 ```
@@ -190,11 +187,11 @@ plot(candidatedelays, getprobabilities(loglikel))
 One can easily parallelise the posterior estimation by simply replacing `map` with `tmap` provided by the package [ThreadTools.jl](https://github.com/baggepinnen/ThreadTools.jl). 
 Package `ThreadTools.jl` needs to be independently installed. Before that, one has to make sure that multiple threads are available by starting Julia with e.g. `julia -t 4` option:
 ```
+using Plots # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
+
 using GPCC
 
 using ProgressMeter, ThreadTools # need to be independently installed
-
-using Plots # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 candidatedelays = collect(0.0:0.1:20);
 
@@ -222,11 +219,11 @@ Instead of function `simulatetwolightcurves`, we use function `simulatethreeligh
 We evaluate the delays using a `tmap` inside a `map`:
 
 ```
+using Plots # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
+
 using GPCC
 
 using ProgressMeter, ThreadTools # need to be independently installed
-
-using Plots # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...)
 # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
@@ -235,29 +232,19 @@ candidatedelays = collect(0.5:0.05:6) # use smaller and finer range
 
 tobs, yobs, σobs, truedelays = simulatethreelightcurves();
 
-
 # Get estimate for lengthscale parameter ρ
 ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
 
 out = @showprogress map(d2 -> tmap(d1 -> (gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;d1;d2], iterations = 1000, ρfixed = ρ)[1]), candidatedelays), candidatedelays);
 
 posterior = getprobabilities(reduce(vcat, out));
-
 posterior = reshape(posterior, length(candidatedelays), length(candidatedelays));
 
-figure()
-subplot(311)
-title("joint posterior")
-pcolor(candidatedelays,candidatedelays,posterior)
-ylabel("lightcurve 2"); xlabel("lightcurve 3")
+p1 = contourf(candidatedelays, candidatedelays, posterior, title = "joint posterior", ylabel="lightcurve 2", xlabel="lightcurve 3", aspect_ratio = :equal, fontsize=10)
+p2 = plot(candidatedelays, vec(sum(posterior,dims=2)), title="marginal for lightcurve 2", label = false, fontsize=10)
+p3 = plot(candidatedelays, vec(sum(posterior,dims=1)), title="marginal for lightcurve 3", label = false, fontsize=10)
 
-subplot(312)
-title("marginal posterior for lightcurve 2")
-plot(candidatedelays,vec(sum(posterior,dims=2)))
-
-subplot(313)
-title("marginal posterior for lightcurve 3")
-plot(candidatedelays,vec(sum(posterior,dims=1)))
+plot(p2,p1,plot(legend=false,grid=false,foreground_color_subplot=:white),p3,layout=(2,2),size=(600,600))   
 ```
 
 We should obtain a joint posterior and marginal posteriors similar to the ones plotted below:
