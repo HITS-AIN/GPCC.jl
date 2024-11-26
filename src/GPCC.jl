@@ -8,20 +8,9 @@ module GPCC
     
     using StatsFuns, Distances
 
-    using ProgressMeter#, ThreadTools
-
-    # using ELBOfy
-
-    # using Memoization, ThreadSafeDicts
-
+    using ProgressMeter
     
-    # Following lines makes ProgressMeter work with tmap1
 
-    # ProgressMeter.ncalls(::typeof(tmap1), ::Function, args...) = ProgressMeter.ncalls_map(args...)
-
-
-    # include("posteriordelay.jl")
-    
     include("covariance.jl")
 
     include("simulatedata.jl")
@@ -44,10 +33,8 @@ module GPCC
     
     export infercommonlengthscale
     export posteriordelay
-    export simulatetwolightcurves, simulatethreelightcurves#, simulatefourlightcurves, simulatefivelightcurves
+    export simulatetwolightcurves, simulatethreelightcurves
     export gpcc
     export getprobabilities, uniformpriordelay
-    # export gpccvi
-
 
 end
