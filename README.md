@@ -8,8 +8,6 @@
   <img width="253" height="165" src=logo.png>
 </p>
 
-❗The repo is currently being updated. Please be aware that certain functionality may not be available in the meanwhile.❗
-
 ## ℹ What is this?
 
 This is a Julia implementation of the Gaussian Process Cross Correlation (GPCC) method introduced in 
