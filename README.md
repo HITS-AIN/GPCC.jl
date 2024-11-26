@@ -104,7 +104,11 @@ using GPCC
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
-# We choose the Matern32 kernel. Other choices are GPCC.OU, GPCC.rbf, GPCC.matern32, GPCC.matern52
+# We first determine the lengthscale for the GPCC with the following call.
+# We choose the rbf kernel. Other choices are GPCC.OU, GPCC.matern32, GPCC.matern52
+
+ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
+
 # We fit the model for the given the true delays 
 # Note that without loss of generality we can always set the delay of the 1st band equal to zero
 # The optimisation of the GP hyperparameters runs for a maximum of 1000 iterations.
