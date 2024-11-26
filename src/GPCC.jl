@@ -8,19 +8,19 @@ module GPCC
     
     using StatsFuns, Distances
 
-    using ProgressMeter, ThreadTools
+    using ProgressMeter#, ThreadTools
 
     # using ELBOfy
 
-    using Memoization, ThreadSafeDicts
+    # using Memoization, ThreadSafeDicts
 
     
     # Following lines makes ProgressMeter work with tmap1
 
-    ProgressMeter.ncalls(::typeof(tmap1), ::Function, args...) = ProgressMeter.ncalls_map(args...)
+    # ProgressMeter.ncalls(::typeof(tmap1), ::Function, args...) = ProgressMeter.ncalls_map(args...)
 
 
-    include("posteriordelay.jl")
+    # include("posteriordelay.jl")
     
     include("covariance.jl")
 
