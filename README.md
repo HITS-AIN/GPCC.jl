@@ -171,7 +171,7 @@ We use `map` to run `gpcc` on all candidate delays as follows:
 ```
 using GPCC
 
-using PLots # we need this for plotting the posterior probabilities, must be independently installed. Other plotting packages can be used instead
+using Plots # we need this for plotting the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
