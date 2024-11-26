@@ -69,6 +69,13 @@ Method `simulatetwolightcurves` can be used to simulate data in 2 arbitrary (non
 ```
 using GPCC
 tobs, yobs, σobs, truedelays = simulatetwolightcurves() # output omitted
+
+# Plot data.
+# Plots.jl must be independently installed.
+# Alternative plotting packages may be used.
+using Plots
+scatter(tobs[1],yobs[1],grid=false,yerror=σobs[1], color="blue")
+scatter!(tobs[2],yobs[2],grid=false,yerror=σobs[2], color="orange")
 ```
 
 <p align="center">
