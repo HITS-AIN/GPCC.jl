@@ -8,7 +8,7 @@
   <img width="253" height="165" src=logo.png>
 </p>
 
-The repo is currently being updated. Please be aware that certain functionality may not be available in the meanwhile.
+❗The repo is currently being updated. Please be aware that certain functionality may not be available in the meanwhile.❗
 
 ## ℹ What is this?
 
@@ -21,6 +21,8 @@ GPCC is a probabilistic alternative to the Interpolated Cross Correlation functi
 - Outputs a probability distribution for the delay.
 - It can incorporate a prior on the delay.
 - Delivers predictions for out-of-sample data.
+
+A faster version of the GPCC, sped up via a heuristic, is implemented in package [FasterGPCC.jl](https://github.com/HITS-AIN/FasterGPCC.jl).
 
 ## 💾 Installation
 
