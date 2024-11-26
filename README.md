@@ -171,7 +171,7 @@ We use `map` to run `gpcc` on all candidate delays as follows:
 ```
 using GPCC
 
-using PyPlot # we need this for plotting the posterior probabilities, must be independently installed. Other plotting packages can be used instead
+using PLots # we need this for plotting the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
@@ -181,8 +181,6 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, ρfixed = ρ)[1] # keep only first output
 
 loglikel = map(helper, candidatedelays)
-
-figure()
 
 plot(candidatedelays, getprobabilities(loglikel))
 ```
