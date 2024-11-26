@@ -194,7 +194,7 @@ using GPCC
 
 using ProgressMeter, ThreadTools # need to be independently installed
 
-using PyPlot # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
+using Plots # we need this to plot the posterior probabilities, must be independently installed. Other plotting packages can be used instead
 
 candidatedelays = collect(0.0:0.1:20);
 
@@ -202,11 +202,13 @@ tobs, yobs, σobs, truedelays = simulatetwolightcurves();
 
 ProgressMeter.ncalls(::typeof(tmap), ::Function, args...) = ProgressMeter.ncalls_map(args...) # this line makes ProgressBar work with ThreadTools, see https://github.com/timholy/ProgressMeter.jl#adding-support-for-more-map-like-functions
 
-helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, rhomax = 300)[1] # keep only first output
+
+# Get estimate for lengthscale parameter ρ
+ρ = infercommonlengthscale(tobs, yobs, σobs; kernel = GPCC.rbf, iterations = 1000)
+
+helper(delay) = gpcc(tobs, yobs, σobs; kernel = GPCC.rbf, delays = [0;delay], iterations = 1000, ρfixed = ρ)[1] # keep only first output
 
 loglikel = @showprogress tmap(helper, candidatedelays)
-
-figure()
 
 plot(candidatedelays, getprobabilities(loglikel))
 ```
