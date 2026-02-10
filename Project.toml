@@ -1,6 +1,6 @@
 name = "GPCC"
 uuid = "4498ab02-56af-48f6-b5af-4c1c07c71523"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["Nikos Gianniotis <ngiann@gmail.com>"]
 
 [deps]
